@@ -94,16 +94,21 @@
   // ---------- 入口頁 ----------
   function buildTitle() {
     const t = $('#title');
-    t.innerHTML = `<div class="tw"><div class="stars"></div><div class="moon"></div>
-      <div class="ttl"><h1>${S.title}</h1><div class="sub">${S.subtitle}</div></div>
-      <button id="startBtn">${st.seenIntro ? '繼續營業' : '開始遊戲'}</button>
-      <div class="wall"><i class="wlamp" style="left:290px"></i><i class="wlamp" style="right:290px"></i></div>
-      <div class="frame"><div class="interior"><i class="sil" style="left:60px;width:46px;height:110px"></i><i class="sil" style="left:190px;width:60px;height:92px"></i><i class="sil" style="right:70px;width:50px;height:120px"></i></div>
-      <div class="door l" id="dL"></div><div class="door r" id="dR"></div></div></div>
-      <button class="rstbtn" id="rst">重置存檔</button>`;
-    Art.applyBg(t, S.assets.title_bg);
-    if (S.assets.door_l) { $('#dL').style.background = `url(${S.assets.door_l}) center/cover`; $('#dL').style.border = 'none'; }
-    if (S.assets.door_r) { $('#dR').style.background = `url(${S.assets.door_r}) center/cover`; $('#dR').style.border = 'none'; }
+    if (S.assets.title_bg) {            // 正式美術版：背景圖 + 門板圖
+      t.innerHTML = `<div class="tw art" style="background-image:url(${S.assets.title_bg})">
+        <div class="ttl"><h1>${S.title}</h1><div class="sub">${S.subtitle}</div></div>
+        <div class="doorway"><img class="door l" id="dL" src="${S.assets.door_l}" alt=""><img class="door r" id="dR" src="${S.assets.door_r}" alt=""></div>
+        <button id="startBtn">${st.seenIntro ? '繼續營業' : '開始遊戲'}</button></div>
+        <button class="rstbtn" id="rst">重置存檔</button>`;
+    } else {                            // 備用：CSS 繪製版
+      t.innerHTML = `<div class="tw"><div class="stars"></div><div class="moon"></div>
+        <div class="ttl"><h1>${S.title}</h1><div class="sub">${S.subtitle}</div></div>
+        <button id="startBtn">${st.seenIntro ? '繼續營業' : '開始遊戲'}</button>
+        <div class="wall"><i class="wlamp" style="left:290px"></i><i class="wlamp" style="right:290px"></i></div>
+        <div class="frame"><div class="interior"><i class="sil" style="left:60px;width:46px;height:110px"></i><i class="sil" style="left:190px;width:60px;height:92px"></i><i class="sil" style="right:70px;width:50px;height:120px"></i></div>
+        <div class="door l" id="dL"></div><div class="door r" id="dR"></div></div></div>
+        <button class="rstbtn" id="rst">重置存檔</button>`;
+    }
     $('#startBtn').onclick = startGame;
     $('#rst').onclick = resetAll;
   }

@@ -1,11 +1,12 @@
 """把 Codex 生成的 2x8 像素小人圖（洋紅背景）切格、縮成原生像素並收斂色盤。
 用法: python slice_sprite.py 原圖.png sprites/<id>.png 32 40 38 30 24
-       （格寬 格高 腳底基準線 角色高度 色數）"""
+       （格寬 格高 腳底基準線 角色高度 色數 [magenta|green]）"""
 import sys, numpy as np
 from PIL import Image, ImageFilter
 src, dst, FW, FH, BASE, TARGET_H, NCOL = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7])
+KEY = {'magenta': (255, 0, 255), 'green': (0, 255, 0)}[sys.argv[8] if len(sys.argv) > 8 else 'magenta']
 im = Image.open(src).convert('RGB'); a = np.asarray(im).astype(np.float32)
-d = np.sqrt(((a - np.array([255, 0, 255], np.float32)) ** 2).sum(2))
+d = np.sqrt(((a - np.array(KEY, np.float32)) ** 2).sum(2))
 mask = (d > 110)
 m_img = Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3))   # 去掉邊緣洋紅殘留
 mask = np.asarray(m_img) > 128

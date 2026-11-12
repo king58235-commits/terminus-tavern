@@ -252,10 +252,23 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 /* ===== 立繪（真圖）尺寸 ===== */
 .figimg{display:block;width:auto;max-width:none}
 .dfig:has(.figimg){transform:none !important}
-.dfig.left:has(.figimg){left:200px;bottom:0}
-.dfig.right:has(.figimg){left:860px;bottom:0}
-.dfig.center:has(.figimg){left:520px;bottom:0}
-.dfig .figimg{height:640px}
+.dfig.left:has(.figimg){left:110px;bottom:-250px}
+.dfig.right:has(.figimg){left:800px;bottom:-250px}
+.dfig.center:has(.figimg){left:480px;bottom:-250px}
+.dfig .figimg{height:900px}
 .dfig.dim .figimg{filter:brightness(.5)}
 .guestfig:has(.figimg){transform:translate(-50%,-100%) !important}
 .guestfig .figimg{height:430px}
+
+/* ===== 入口頁（正式美術版） ===== */
+#title .tw.art{background-size:100% 100%;background-repeat:no-repeat;transform-origin:50% 76%}
+#title .tw.art .ttl{top:34px}
+#title .tw.art .ttl h1{font-size:92px}
+.doorway{position:absolute;left:547px;top:524px;width:194px;height:128px;perspective:700px;z-index:2}
+.doorway .door{position:absolute;top:0;width:50%;height:100%;border:none;border-radius:0;background:none;image-rendering:pixelated;
+  transition:transform 1s cubic-bezier(.3,1.5,.5,1)}
+.doorway .door.l{left:0;transform-origin:left center}
+.doorway .door.r{right:0;transform-origin:right center}
+#title.opening .doorway .door.l{transform:rotateY(78deg)}
+#title.opening .doorway .door.r{transform:rotateY(-78deg)}
+#title .tw.art #startBtn{top:auto;bottom:22px;background:rgba(10,8,18,.7)}

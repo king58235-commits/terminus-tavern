@@ -9,9 +9,9 @@ const STORY = {
 
   // 素材槽：填入圖片路徑就會取代 CSS 繪製（留 null 則使用 CSS 版）
   assets: {
-    title_bg: null,   // 入口頁背景（1280x720）
-    door_l: null,     // 左門板
-    door_r: null,     // 右門板
+    title_bg: 'backgrounds/title_bg.png',   // 入口頁背景（1280x720）
+    door_l: 'backgrounds/door_l.png',     // 左門板
+    door_r: 'backgrounds/door_r.png',     // 右門板
     bar_bg: null,     // 酒吧背景（1280x720）
     mix_bg: null,     // 調酒模式背景（1280x720）
     keeper: 'portraits/keeper.png',     // 老闆立繪
@@ -19,10 +19,11 @@ const STORY = {
       rena: 'portraits/rena.png', kael: 'portraits/kael.png', mira: 'portraits/mira.png',
       luna: 'portraits/luna.png', hero: 'portraits/hero.png', lot: 'portraits/lot.png',
     },
-    // 像素小人 sprite sheet（格式見 ASSETS.md：每格 24x32、8 欄 x 2 列）
+    // 像素小人 sprite sheet（格式見 ASSETS.md：每格 32x40、8 欄 x 2 列）
     sprites: {
-      keeper: null, waiter: null,
-      rena: null, kael: 'sprites/kael.png', mira: null, luna: null, hero: null, lot: null,
+      keeper: 'sprites/keeper.png', waiter: 'sprites/waiter.png',
+      rena: 'sprites/rena.png', kael: 'sprites/kael.png', mira: 'sprites/mira.png',
+      luna: 'sprites/luna.png', hero: 'sprites/hero.png', lot: 'sprites/lot.png',
     },
   },
 
