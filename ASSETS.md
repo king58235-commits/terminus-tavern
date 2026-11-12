@@ -22,9 +22,9 @@
 ## 2. 像素小人 sprite sheet（酒吧場景使用）
 | 項目 | 規格 |
 |---|---|
-| 每格 | **24×32 px** |
-| 整張 | 8 欄 × 2 列 = **192×64 px** |
-| 腳底中心 | 每格 (12, 30) |
+| 每格 | **32×40 px**（角色約 30 px 高，腳底落在格內 y=38） |
+| 整張 | 8 欄 × 2 列 = **256×80 px** |
+| 腳底中心 | 每格 (16, 38) |
 | 檔名 | `sprites/<id>.png` |
 | 填入位置 | `STORY.assets.sprites.<id>` |
 
@@ -59,5 +59,5 @@
 
 ## 生圖提示詞方向（給 Codex）
 1. 先生**一張角色設定圖**（正面、背面、色票），再依它生各方向的小人，風格才一致。
-2. 提示詞關鍵字：`pixel art, isometric, chibi, 24x32 sprite, limited palette, hard edges, transparent background`。
+2. 提示詞關鍵字：`pixel art, isometric, chibi, 32x40 sprite, limited palette, hard edges, transparent background`。
 3. 同一個角色的立繪與小人要共用髮色、衣色、配件（例如戈爾的紅羽頭盔、米菈的紫色魔女帽）。

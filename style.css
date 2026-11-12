@@ -248,3 +248,14 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 .ent .bubble{top:-4px}
 .ent .nameplate{position:absolute;left:50%;top:118px;transform:translateX(-50%);white-space:nowrap;font-size:14px;background:rgba(10,6,12,.82);border:1px solid var(--line);padding:1px 12px;border-radius:4px;pointer-events:none}
 .ent .say{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);animation:none;font-size:14px;padding:5px 11px;border-radius:8px;z-index:12;pointer-events:none}
+
+/* ===== 立繪（真圖）尺寸 ===== */
+.figimg{display:block;width:auto;max-width:none}
+.dfig:has(.figimg){transform:none !important}
+.dfig.left:has(.figimg){left:200px;bottom:0}
+.dfig.right:has(.figimg){left:860px;bottom:0}
+.dfig.center:has(.figimg){left:520px;bottom:0}
+.dfig .figimg{height:640px}
+.dfig.dim .figimg{filter:brightness(.5)}
+.guestfig:has(.figimg){transform:translate(-50%,-100%) !important}
+.guestfig .figimg{height:430px}

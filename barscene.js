@@ -155,6 +155,7 @@ const BarScene = (function () {
   }
 
   // ---------- 人物（像素小人） ----------
+  const SW = 32, SH = 40;   // sprite sheet 每格尺寸（8 欄 x 2 列）
   const sheets = {};
   function sheetFor(id) {
     const p = S.assets.sprites && S.assets.sprites[id]; if (!p) return null;
@@ -169,8 +170,8 @@ const BarScene = (function () {
     g.fillStyle = 'rgba(0,0,0,.38)'; g.fillRect(x - 5, y - 1, 10, 2); g.fillRect(x - 3, y + 1, 6, 1);
     const im = p.id && sheetFor(p.id);
     if (im) {
-      const col = sit ? 6 + (fr ? 1 : 0) : walk ? 2 + wf : fr, row = dir === 1 ? 0 : 1;
-      g.drawImage(im, col * 24, row * 32, 24, 32, x - 12, y - 30 + (sit ? 3 : 0), 24, 32); return;
+      const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : fr, row = dir === 1 ? 0 : 1;
+      g.drawImage(im, col * SW, row * SH, SW, SH, x - SW / 2, y - 38, SW, SH); return;   // 腳底基準線在格內 y=38
     }
     let by = y; if (sit) by = y - 1;
     if (L.ghost) by = y - 4 + (Math.floor(t / 450) & 1);
@@ -265,7 +266,7 @@ const BarScene = (function () {
       const pc = iso(t.gx + .5, t.gy + .5); lights.push({ x: pc.x + 3, y: pc.y - 18, r: 26 });
       const sBR = { id: ti + 'a', gx: t.gx + .5, gy: t.gy - .5, dir: -1, table: ti, occ: null, tile: [t.gx, t.gy - 1] };
       const sBL = { id: ti + 'b', gx: t.gx - .5, gy: t.gy + .5, dir: 1, table: ti, occ: null, tile: [t.gx - 1, t.gy] };
-      [sBR, sBL].forEach(s => { seats.push(s); add(s.gx + s.gy - 0.3, g => { const p = iso(s.gx - .2, s.gy - .2); void p; box(g, s.gx - .2, s.gy - .2, .4, .4, 6, { top: '#c9c4b4', l: '#8a867a', r: '#68655c', hi: '#e2ddcc' }); }); });
+      [sBR, sBL].forEach(s => { seats.push(s); add(s.gx + s.gy - 0.3, g => { if (s.occ && sheetFor(s.occ)) return; box(g, s.gx - .2, s.gy - .2, .4, .4, 6, { top: '#c9c4b4', l: '#8a867a', r: '#68655c', hi: '#e2ddcc' }); }); });
     });
     // 牆燈光
     [[OX + 2.8 * 16, OY + 22], [OX + 6.8 * 16, OY + 20], [OX - 2 * 16, OY + 18], [OX - 5.2 * 16, OY + 26]].forEach(p => lights.push({ x: p[0], y: p[1], r: 30 }));
@@ -336,6 +337,7 @@ const BarScene = (function () {
             if (p.timer <= 0) { if (Math.random() < 0.3 && passers.filter(q => q.away).length < 2) leave(p); else sendToSeat(p); }
           } else if (p.mode === 'stand') { p.timer -= dt; if (p.timer <= 0) sendToSeat(p); }
         }
+        if (p.kind === 'special') p.drink = (Math.floor(now / 3500 + (p.npc.name.charCodeAt(0) % 5)) % 3 === 1);
         if (p.kind === 'waiter') {
           if (p.mode === 'stand') {
             p.timer -= dt;

@@ -14,14 +14,15 @@ const STORY = {
     door_r: null,     // 右門板
     bar_bg: null,     // 酒吧背景（1280x720）
     mix_bg: null,     // 調酒模式背景（1280x720）
-    keeper: null,     // 老闆立繪
+    keeper: 'portraits/keeper.png',     // 老闆立繪
     portrait: {       // 各客人立繪（約 400x720，透明背景）
-      rena: null, kael: null, mira: null, luna: null, hero: null, lot: null,
+      rena: 'portraits/rena.png', kael: 'portraits/kael.png', mira: 'portraits/mira.png',
+      luna: 'portraits/luna.png', hero: 'portraits/hero.png', lot: 'portraits/lot.png',
     },
     // 像素小人 sprite sheet（格式見 ASSETS.md：每格 24x32、8 欄 x 2 列）
     sprites: {
       keeper: null, waiter: null,
-      rena: null, kael: null, mira: null, luna: null, hero: null, lot: null,
+      rena: null, kael: 'sprites/kael.png', mira: null, luna: null, hero: null, lot: null,
     },
   },
 
