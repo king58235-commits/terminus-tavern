@@ -173,5 +173,25 @@
     return out;
   }
 
-  root.Engine = { D, ING, flavor, quality, matchRecipe, cocktailName, moodOf, idealToday, guestsOfDay, judge, hintsOf, tagsOf, TIERS };
+  // 送酒後的反應對話：避免「第一句稱讚、第二句挑剔」的割裂感
+  // - 難以下嚥：客人直接說出哪裡不對（語氣一致）
+  // - 普通／喜歡／很喜歡：客人只說整體評價；細節改用旁白，語氣是「再調整一下也許更好」
+  // - 完美：不挑剔
+  function reaction(npc, name, j) {
+    const t = j.tier, lines = [{ w: 'sys', t: `（你把「${name}」推到${npc.name}面前。）` }, { w: 'npc', t: j.line }];
+    if (j.hints.length) {
+      if (t.stars === 0) lines.push({ w: 'npc', t: '……' + j.hints.join('，') + '。' });
+      else if (t.stars <= 3) {          // 用「建議」的語氣，不去評判這杯酒的缺點
+        const nm = { sweet: '甜味', sour: '酸味', bitter: '苦味', spicy: '辣度', strong: '酒勁', aroma: '香氣' };
+        const tips = j.diffs.filter(x => Math.abs(x.diff) >= 2).sort((a, b) => Math.abs(b.diff) * b.w - Math.abs(a.diff) * a.w).slice(0, 2)
+          .map(x => (x.diff > 0 ? `${nm[x.dim.id]}收斂一點` : `${nm[x.dim.id]}再多一點`));
+        if (tips.length) lines.push({ w: 'sys', t: `（若想更合${npc.name}今天的口味，也許可以試試：${tips.join('、')}。）` });
+      }
+    }
+    if (j.likeHit.length) lines.push({ w: 'sys', t: `（「${j.likeHit.join('、')}」的味道，正中${npc.name}的喜好。）` });
+    if (j.hateHit.length) lines.push({ w: 'sys', t: `（${npc.name}的眉頭動了一下——大概是「${j.hateHit.join('、')}」。）` });
+    return lines;
+  }
+
+  root.Engine = { reaction,  D, ING, flavor, quality, matchRecipe, cocktailName, moodOf, idealToday, guestsOfDay, judge, hintsOf, tagsOf, TIERS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -2,12 +2,12 @@
    終末酒吧 — 音訊：BGM（mp3）＋全部用 WebAudio 合成的音效
    - 音效不依賴任何外部檔案（水聲、冰塊、搖酒杯、杯子碰撞、門聲、提示音……都是程式合成）
    - BGM 路徑在 story.js 的 STORY.audio.bgm
-   - 音量與靜音存在 localStorage（km_audio_v1），HUD／入口頁右上角的喇叭按鈕可調整
+   - 音量與靜音存在 localStorage（km_audio_v2），HUD／入口頁右上角的喇叭按鈕可調整
    ============================================================ */
 const Sound = (function () {
   'use strict';
-  const KEY = 'km_audio_v1';
-  const st = { bgm: 0.3, sfx: 0.9, muted: false };   // BGM 母帶很響（RMS 約 0.18），預設音量要比音效低
+  const KEY = 'km_audio_v2';   // v2：BGM 音量改為曲線對應，舊設定不沿用
+  const st = { bgm: 0.5, sfx: 0.9, muted: false };
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -47,7 +47,6 @@ const Sound = (function () {
       select(t) { tone(t, 520, 0.09, { slide: 260, vol: 0.11 }); noise(t, 0.035, { f: 1800, Q: 2, vol: 0.05 }); return 0.15; },
       blip(t, f) { tone(t, f || 620, 0.035, { type: 'triangle', vol: 0.055 }); return 0.05; },
       next(t) { tone(t, 880, 0.06, { type: 'triangle', vol: 0.08 }); return 0.1; },
-      knock(t) { for (let i = 0; i < 2; i++) { tone(t + i * 0.13, 230, 0.09, { slide: 150, vol: 0.2 }); noise(t + i * 0.13, 0.04, { f: 700, Q: 1.5, vol: 0.08 }); } return 0.4; },
       whoosh(t, dur) { dur = dur || 0.55; noise(t, dur, { f: 300, f2: 1800, Q: 0.7, vol: 0.13, a: dur * 0.4 }); return dur; },
       thump(t, f) { tone(t, f || 90, 0.2, { slide: 45, vol: 0.28 }); noise(t, 0.07, { type: 'lowpass', f: 320, vol: 0.12 }); return 0.25; },
       creak(t, dur) {
@@ -60,19 +59,7 @@ const Sound = (function () {
       },
       doorOpen(t) { S.creak(t, 0.9); S.thump(t + 0.9, 110); for (let i = 0; i < 3; i++) noise(t + 0.95 + i * 0.09, 0.07, { f: 1200 + i * 200, Q: 2, vol: 0.1 }); return 1.4; },
       footsteps(t, n) { n = n || 4; for (let i = 0; i < n; i++) { tone(t + i * 0.3, 85 + rnd(-8, 8), 0.12, { slide: 55, vol: 0.12 }); noise(t + i * 0.3, 0.05, { type: 'lowpass', f: 500, vol: 0.05 }); } return n * 0.3; },
-      pour(t, dur) {
-        dur = dur || 1; noise(t, dur, { f: 700, f2: 1700, Q: 0.8, vol: 0.085, a: 0.12, rel: 0.25 }); noise(t, dur, { type: 'highpass', f: 3200, vol: 0.018, a: 0.15, rel: 0.25 });
-        for (let k = 0; k < dur / 0.07; k++) tone(t + k * 0.07 + rnd(0, 0.03), rnd(280, 520), 0.07, { slide: rnd(520, 900), vol: 0.035 });
-        return dur;
-      },
-      shake(t, dur) {
-        dur = dur || 0.9; for (let k = 0; k < dur / 0.11; k++) { noise(t + k * 0.11, 0.07, { f: 4200, Q: 2.5, vol: 0.1 }); if (k % 3 === 0) tone(t + k * 0.11, rnd(3000, 4600), 0.06, { vol: 0.03 }); }
-        return dur;
-      },
-      ice(t) { for (let i = 0; i < 3; i++) { const f = rnd(2300, 3400); tone(t + i * 0.08, f, 0.22, { vol: 0.06 }); tone(t + i * 0.08, f * 1.5, 0.12, { vol: 0.03 }); } return 0.4; },
       clink(t, v) { v = v || 1; tone(t, 2637, 0.55, { vol: 0.12 * v, wet: 0.3 }); tone(t, 3951, 0.35, { vol: 0.07 * v }); tone(t, 5300, 0.18, { vol: 0.03 * v }); noise(t, 0.015, { type: 'highpass', f: 5000, vol: 0.05 * v }); return 0.6; },
-      slide(t) { noise(t, 0.35, { type: 'lowpass', f: 900, f2: 350, Q: 0.7, vol: 0.13, a: 0.08 }); return 0.4; },
-      mix(t) { S.shake(t, 0.9); S.pour(t + 1.0, 0.9); S.ice(t + 1.75); S.clink(t + 2.05); S.slide(t + 2.3); return 2.7; },
       result(t, stars, gain) {
         if (gain < 0) { tone(t, 190, 0.6, { type: 'triangle', slide: 70, vol: 0.2 }); noise(t, 0.3, { type: 'lowpass', f: 300, vol: 0.1 }); return 0.7; }
         const notes = [[523], [523, 659], [523, 659, 784], [523, 659, 784, 1047], [523, 659, 784, 1047, 1319]][Math.min(4, Math.max(0, stars))];
@@ -82,7 +69,6 @@ const Sound = (function () {
       },
       sparkle(t) { for (let i = 0; i < 9; i++) tone(t + i * 0.06, rnd(2200, 5200), 0.5, { vol: 0.04, wet: 0.6 }); return 0.9; },
       unlock(t) { [784, 988, 1175, 1568].forEach((f, i) => tone(t + i * 0.1, f, 0.8, { vol: 0.09, wet: 0.6 })); S.sparkle(t + 0.3); return 1.2; },
-      gong(t) { [98, 147, 196, 247].forEach((f, i) => tone(t, f, 2.6, { vol: 0.13 / (i + 1), wet: 0.5 })); noise(t, 2.4, { type: 'lowpass', f: 600, f2: 180, vol: 0.09, a: 0.5 }); return 2.6; },
       bell(t, n) { n = n || 3; for (let k = 0; k < n; k++) [1, 2.76, 5.4, 8.9].forEach((m, i) => tone(t + k * 0.95, 392 * m, 2.8, { vol: 0.1 / (i + 1), wet: 0.5 })); return n * 0.95 + 2.8; },
       murmurClink(t) { S.clink(t, 0.25); return 0.6; },
     };
@@ -105,7 +91,8 @@ const Sound = (function () {
 
   // ---------- BGM ----------
   let bgm = null, duckF = 1, duckTo = 1, duckTimer = null, bgmWanted = false;
-  function bgmVol() { return st.muted ? 0 : Math.min(1, st.bgm * duckF); }
+  // 滑桿 50% = 實際音量 0.13（這首 BGM 母帶很響，RMS 約 0.18）；用平方曲線，低音量時調整更細
+  function bgmVol() { return st.muted ? 0 : Math.min(1, 0.13 * Math.pow(st.bgm / 0.5, 2) * duckF); }
   function applyVol() { if (master) master.gain.value = st.muted ? 0 : st.sfx; if (bgm) bgm.volume = bgmVol(); }
   function bgmStart() {
     bgmWanted = true; const src = (typeof STORY !== 'undefined' && STORY.audio && STORY.audio.bgm); if (!src) return;   // 注意：STORY 是 const，不在 window 上
@@ -167,15 +154,14 @@ const Sound = (function () {
   }
 
   return {
-    names: ['click', 'select', 'blip', 'next', 'knock', 'whoosh', 'thump', 'creak', 'doorOpen', 'footsteps', 'pour', 'shake', 'ice', 'clink', 'slide', 'mix', 'result', 'sparkle', 'unlock', 'gong', 'bell'],
+    names: ['click', 'select', 'blip', 'next', 'whoosh', 'thump', 'creak', 'doorOpen', 'footsteps', 'clink', 'result', 'sparkle', 'unlock', 'bell'],
     measure, bindButton,
     unlock() { ensure(); if (!bgm) bgmStart(); },
     bgmStart, duck, ambient,
-    click: () => play('click'), select: () => play('select'), next: () => play('next'), knock: () => play('knock'), whoosh: () => play('whoosh'),
-    doorOpen: () => play('doorOpen'), footsteps: n => play('footsteps', n), gong: () => play('gong'), bell: () => play('bell'),
+    click: () => play('click'), select: () => play('select'), next: () => play('next'), whoosh: () => play('whoosh'),
+    doorOpen: () => play('doorOpen'), footsteps: n => play('footsteps', n), bell: () => play('bell'),
     blip: w => play('blip', w === 'me' ? 420 : w === 'npc' ? 640 : 520), unlockFx: () => play('unlock'),
     result: (stars, gain) => play('result', stars, gain),
-    mixSequence() { const d = play('mix'); return new Promise(r => setTimeout(r, Math.max(d, 0.6) * 1000)); },
     get muted() { return st.muted; },
     // 除錯用：回報 BGM 的實際狀態（是否在播、音量、讀取狀態、錯誤）
     status() { return { wanted: bgmWanted, has: !!bgm, paused: bgm ? bgm.paused : null, volume: bgm ? +bgm.volume.toFixed(2) : null, time: bgm ? +bgm.currentTime.toFixed(1) : null, ready: bgm ? bgm.readyState : null, error: bgm && bgm.error ? bgm.error.code : null, src: bgm ? bgm.currentSrc.split('/').slice(-2).join('/') : null, ctx: ctx ? ctx.state : null, st: Object.assign({}, st), duck: +duckF.toFixed(2) }; },

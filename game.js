@@ -87,7 +87,7 @@
     }
     skip.onclick = e => { e.stopPropagation(); skipAll = true; if (curAdvance) { curAdvance(); if (curAdvance) curAdvance(); } };
     if (ctx.title) {
-      dlg.classList.add('titling'); Sound.gong();          // 標題出現時先藏起立繪，避免蓋住標題文字
+      dlg.classList.add('titling');                       // 標題出現時先藏起立繪，避免蓋住標題文字
       box.style.visibility = 'hidden'; skip.style.visibility = 'hidden';
       const t = $('.dtitle', dlg); t.innerHTML = `<small>${ctx.sub || ''}</small><h2>${ctx.title}</h2>`;
       await sleep(150); t.classList.add('on'); await sleep(1800); t.classList.remove('on'); await sleep(500);
@@ -155,7 +155,7 @@
   }
 
   async function openGuest(n) {
-    if (busy) return; busy = true; Sound.knock();
+    if (busy) return; busy = true;
     try {
       const pend = pending(n);
       if (!pend.length && giftsLeft(n) <= 0) { toast(`${n.name} 今晚已經喝夠了。`); return; }
@@ -237,17 +237,13 @@
     if (busy || !sel.base || giftsLeft(mixNpc) <= 0) return; busy = true;
     const n = mixNpc;
     try {
-      $('#prev').classList.add('shaking'); await Sound.mixSequence(); $('#prev').classList.remove('shaking');   // 搖酒、倒酒、冰塊、碰杯、推杯（約 2.7 秒）
       const j = E.judge(sel, n, st.day), name = E.cocktailName(sel, j.f, j.q.recipe);
       const from = aff(n), to = clamp(from + j.tier.gain, 0, 100);
       st.affinity[n.id] = to; const k = st.day + ':' + n.id; st.gifts[k] = (st.gifts[k] || 0) + 1;
       st.log.unshift({ day: st.day, npc: n.name, name, final: j.final, gain: to - from }); st.log = st.log.slice(0, 30);
       save(); renderInfo(); renderPrev();
 
-      const lines = [{ w: 'sys', t: `（你把「${name}」推到${n.name}面前。）` }, { w: 'npc', t: j.line }];
-      if (j.hints.length) lines.push({ w: 'npc', t: '……' + j.hints.join('，') + '。' });
-      if (j.likeHit.length) lines.push({ w: 'sys', t: `（「${j.likeHit.join('、')}」的味道，似乎正中他的喜好。）` });
-      if (j.hateHit.length) lines.push({ w: 'sys', t: `（他皺了一下眉——大概是「${j.hateHit.join('、')}」。）` });
+      const lines = E.reaction(n, name, j);
       await playDlg(lines, { npc: n, mode: 'clear', noFigs: true });
 
       const pend = pending(n);

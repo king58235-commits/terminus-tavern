@@ -290,5 +290,3 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 #audioPanel label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;margin:7px 0;color:var(--ink)}
 #audioPanel input[type=range]{width:120px;accent-color:#e8b45c}
 #audioPanel label.chk{justify-content:flex-start;color:var(--mute)}
-#prev.shaking{animation:shk .11s infinite}
-@keyframes shk{0%,100%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-1px)}}
