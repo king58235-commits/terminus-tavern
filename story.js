@@ -27,6 +27,14 @@ const STORY = {
       passer_0: 'sprites/passer_0.png', passer_1: 'sprites/passer_1.png', passer_2: 'sprites/passer_2.png', passer_3: 'sprites/passer_3.png',
       passer_4: 'sprites/passer_4.png', passer_5: 'sprites/passer_5.png', passer_6: 'sprites/passer_6.png', passer_7: 'sprites/passer_7.png',
     },
+    // 各小人「頭頂高度」（腳底往上，單位＝場景像素），由 tools/measure_tops.py 量出；泡泡與名牌依此定位
+    spriteTops: {
+      keeper: { stand: 35.2, sit: 33.5 }, waiter: { stand: 35.2, sit: 33.7 },
+      rena: { stand: 35.5, sit: 34.8 }, kael: { stand: 35.2, sit: 33.8 }, mira: { stand: 35.3, sit: 33.8 },
+      luna: { stand: 35.0, sit: 33.3 }, hero: { stand: 35.0, sit: 33.5 }, lot: { stand: 35.0, sit: 32.0 },
+      passer_0: { stand: 33.8, sit: 31.0 }, passer_1: { stand: 33.5, sit: 32.8 }, passer_2: { stand: 33.5, sit: 33.2 }, passer_3: { stand: 33.8, sit: 31.2 },
+      passer_4: { stand: 33.7, sit: 32.3 }, passer_5: { stand: 33.3, sit: 32.0 }, passer_6: { stand: 33.5, sit: 31.3 }, passer_7: { stand: 33.5, sit: 30.5 },
+    },
     // 場景貼圖（地板含地毯 9x8 格、右牆 9 格長、左牆 8 格長；程式依等距座標貼上）
     scene: { floor: 'scene/floor.png', wall_r: 'scene/wall_r.png', wall_l: 'scene/wall_l.png' },
     // 家具：w = 顯示寬度（場景像素）、ax/ay = 接地點在圖內的位置比例；counter 另有專用設定
@@ -257,7 +265,7 @@ GAME_DATA.npcs.forEach(n => Object.assign(n, STORY.npcs[n.id]));
 
 // 素材版本號：換圖後請把這個字串改掉（例如改成日期），瀏覽器就會重新下載，不會用到舊快取。
 // （用程式載入的圖片，Ctrl+F5 不一定會重新抓，所以所有素材路徑都自動加上 ?v=版本）
-STORY.version = '20251113e';
+STORY.version = '20251113f';
 (function bust(o) {
   for (const k in o) {
     if (typeof o[k] === 'string') o[k] += '?v=' + STORY.version;

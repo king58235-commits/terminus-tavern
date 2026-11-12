@@ -491,7 +491,10 @@ const BarScene = (function () {
         const el = p.el; if (!el) return;
         if (p.away) { el.style.display = 'none'; return; } el.style.display = '';
         const pos = iso(p.gx, p.gy), sit = p.mode === 'sit';
-        el.style.left = (pos.x * PS - 26) + 'px'; el.style.top = ((pos.y - (sit ? 30 : 29)) * PS) + 'px';
+        // 泡泡/名牌依各小人的「頭頂高度」定位：框的上緣＝頭頂，泡泡貼在框上方、名牌貼在腳底下方
+        const sid = p.sprite || p.id, tp = sid && (S.assets.spriteTops || {})[sid];
+        const topU = (tp ? (sit ? tp.sit : tp.stand) : (sit ? 26 : 27)) + 1.5;   // +1.5：與頭頂留一點空隙（含呼吸浮動）
+        el.style.left = (pos.x * PS - 26) + 'px'; el.style.top = ((pos.y - topU) * PS) + 'px'; el.style.height = (topU * PS) + 'px';
         let sayEl = el.querySelector('.say');
         if (p.say) {
           if (!sayEl) { sayEl = document.createElement('div'); sayEl.className = 'say'; el.appendChild(sayEl); }

@@ -245,9 +245,9 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 .ents{position:absolute;inset:0;pointer-events:none}
 .ent{position:absolute;width:52px;height:120px;cursor:pointer;pointer-events:auto}
 .ent.k-keeper,.ent.k-waiter,.ent.k-passer{cursor:default}
-.ent .bubble{top:-4px}
-.ent .nameplate{position:absolute;left:50%;top:118px;transform:translateX(-50%);white-space:nowrap;font-size:14px;background:rgba(10,6,12,.82);border:1px solid var(--line);padding:1px 12px;border-radius:4px;pointer-events:none}
-.ent .say{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);animation:none;font-size:14px;padding:5px 11px;border-radius:8px;z-index:12;pointer-events:none}
+.ent .bubble{top:auto !important;bottom:100%;margin-bottom:6px}
+.ent .nameplate{position:absolute;left:50%;top:100%;margin-top:6px;transform:translateX(-50%);white-space:nowrap;font-size:14px;background:rgba(10,6,12,.82);border:1px solid var(--line);padding:1px 12px;border-radius:4px;pointer-events:none}
+.ent .say{position:absolute;left:50%;top:auto;bottom:100%;margin-bottom:6px;transform:translateX(-50%);animation:none;font-size:14px;padding:5px 11px;border-radius:8px;z-index:12;pointer-events:none}
 
 /* ===== 立繪（真圖）尺寸 ===== */
 .figimg{display:block;width:auto;max-width:none}
