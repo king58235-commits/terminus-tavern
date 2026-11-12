@@ -12,6 +12,13 @@ const Sound = (function () {
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const rnd = (a, b) => a + Math.random() * (b - a);
 
+  // 合成音效本身偏小聲（短音效峰值多在 0.05~0.3），所以整體乘上 makeup，再用限幅器擋住過大的峰值
+  const SFX_MAKEUP = 2.6;
+  function limiter(c) {
+    const comp = c.createDynamicsCompressor(); comp.threshold.value = -10; comp.knee.value = 6; comp.ratio.value = 10; comp.attack.value = 0.002; comp.release.value = 0.12;
+    comp.connect(c.destination); return comp;
+  }
+
   // ---------- 合成器（可用於即時或離線 AudioContext） ----------
   function makeSynth(ctx, out) {
     const sr = ctx.sampleRate;
@@ -81,8 +88,7 @@ const Sound = (function () {
     if (!ctx) {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
       ctx = new AC(); master = ctx.createGain();
-      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
-      master.connect(comp); comp.connect(ctx.destination); synth = makeSynth(ctx, master); applyVol();
+      master.connect(limiter(ctx)); synth = makeSynth(ctx, master); applyVol();
     }
     if (ctx.state === 'suspended') ctx.resume();
     return true;
@@ -93,7 +99,7 @@ const Sound = (function () {
   let bgm = null, duckF = 1, duckTo = 1, duckTimer = null, bgmWanted = false;
   // 滑桿 50% = 實際音量 0.13（這首 BGM 母帶很響，RMS 約 0.18）；用平方曲線，低音量時調整更細
   function bgmVol() { return st.muted ? 0 : Math.min(1, 0.13 * Math.pow(st.bgm / 0.5, 2) * duckF); }
-  function applyVol() { if (master) master.gain.value = st.muted ? 0 : st.sfx; if (bgm) bgm.volume = bgmVol(); }
+  function applyVol() { if (master) master.gain.value = st.muted ? 0 : st.sfx * SFX_MAKEUP; if (bgm) bgm.volume = bgmVol(); }
   function bgmStart() {
     bgmWanted = true; const src = (typeof STORY !== 'undefined' && STORY.audio && STORY.audio.bgm); if (!src) return;   // 注意：STORY 是 const，不在 window 上
     if (!bgm) { bgm = new Audio(src); bgm.loop = true; bgm.preload = 'auto'; }
@@ -146,8 +152,8 @@ const Sound = (function () {
 
   // ---------- 離線驗證用：渲染某個音效並回報峰值，檢查是否有聲音、有沒有爆音 ----------
   async function measure(name, args) {
-    const sec = 4, oc = new OfflineAudioContext(2, 44100 * sec, 44100), g = oc.createGain(), comp = oc.createDynamicsCompressor();
-    g.connect(comp); comp.connect(oc.destination); const sy = makeSynth(oc, g); const dur = sy[name].apply(null, [0.05].concat(args || []));
+    const sec = 4, oc = new OfflineAudioContext(2, 44100 * sec, 44100), g = oc.createGain();
+    g.gain.value = st.sfx * SFX_MAKEUP; g.connect(limiter(oc)); const sy = makeSynth(oc, g); const dur = sy[name].apply(null, [0.05].concat(args || []));
     const buf = await oc.startRendering(), d = buf.getChannelData(0); let peak = 0, sum = 0, nz = 0;
     for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; sum += v * v; if (v > 0.001) nz++; }
     return { name, dur: +(+dur).toFixed(2), peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), audibleMs: Math.round(nz / 44.1) };
