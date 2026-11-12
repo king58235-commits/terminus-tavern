@@ -96,12 +96,25 @@
   }
 
   // 每日心情：每位 NPC 每天某個維度 ±2
+  // 角色的「固定個性」維度：與 hintsOf 顯示在角色卡上的「愛X／怕X」是同一套門檻
+  const TRAIT_HI = 6, TRAIT_LO = 1.5;
+  const traitDims = npc => D.dims.filter(d => npc.ideal[d.id] >= TRAIT_HI || npc.ideal[d.id] <= TRAIT_LO).map(d => d.id);
+  const MOOD_PHRASE = {
+    sweet: ['偏甜的', '比較不甜的'], sour: ['偏酸的', '比較不酸的'], bitter: ['偏苦的', '比較不苦的'],
+    spicy: ['偏辣的', '比較不辣的'], strong: ['烈一點的', '淡一點的'], aroma: ['香氣足一點的', '香氣收斂一點的'],
+  };
+  // 今日心情：每天讓「一個維度」偏移 ±2。
+  // 為了不和角色卡上的個性（愛辣、怕甜……）打架：心情只會落在「沒有明確個性」的維度；
+  // 若每個維度都有個性，就只允許強化自己的個性（愛辣的人今天更想吃辣），絕不反過來。
   function moodOf(npc, day) {
     const idx = D.npcs.indexOf(npc);
     const r = mulberry32(day * 131 + idx * 17 + 5);
-    const dim = D.dims[Math.floor(r() * D.dims.length)];
-    const delta = r() < 0.5 ? -2 : 2;
-    return { dim: dim.id, delta, text: `今天${delta > 0 ? '特別想喝偏' : '想喝比較不'}${dim.name}的` };
+    const traits = traitDims(npc), free = D.dims.filter(d => !traits.includes(d.id));
+    let dim, delta;
+    if (free.length) { dim = free[Math.floor(r() * free.length)]; delta = r() < 0.5 ? -2 : 2; }
+    else { dim = D.dims.find(d => d.id === traits[Math.floor(r() * traits.length)]); delta = npc.ideal[dim.id] >= TRAIT_HI ? 2 : -2; }
+    const ph = MOOD_PHRASE[dim.id] || [`偏${dim.name}的`, `比較不${dim.name}的`];
+    return { dim: dim.id, delta, text: delta > 0 ? `今天特別想喝${ph[0]}` : `今天想喝${ph[1]}` };
   }
 
   function idealToday(npc, day) {
@@ -167,8 +180,8 @@
     const out = [];
     D.dims.forEach(d => {
       const v = npc.ideal[d.id];
-      if (v >= 6) out.push(`愛${d.name}`);
-      else if (v <= 1.5) out.push(`怕${d.name}`);
+      if (v >= TRAIT_HI) out.push(`愛${d.name}`);
+      else if (v <= TRAIT_LO) out.push(`怕${d.name}`);
     });
     return out;
   }
