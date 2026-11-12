@@ -101,6 +101,8 @@
   }
 
   // ---------- 入口頁 ----------
+  // 在入口頁先把所有素材載入快取，進酒吧時才不會看到「舊版 → 新圖」的跳換
+  (function preload(o) { for (const k in o) { if (typeof o[k] === 'string') { const im = new Image(); im.src = o[k]; } else if (o[k] && typeof o[k] === 'object') preload(o[k]); } })(S.assets);
   function buildTitle() {
     const t = $('#title');
     if (S.assets.title_bg) {            // 正式美術版：背景圖 + 門板圖

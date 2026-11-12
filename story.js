@@ -24,6 +24,19 @@ const STORY = {
       keeper: 'sprites/keeper.png', waiter: 'sprites/waiter.png',
       rena: 'sprites/rena.png', kael: 'sprites/kael.png', mira: 'sprites/mira.png',
       luna: 'sprites/luna.png', hero: 'sprites/hero.png', lot: 'sprites/lot.png',
+      passer_0: 'sprites/passer_0.png', passer_1: 'sprites/passer_1.png', passer_2: 'sprites/passer_2.png', passer_3: 'sprites/passer_3.png',
+      passer_4: 'sprites/passer_4.png', passer_5: 'sprites/passer_5.png', passer_6: 'sprites/passer_6.png', passer_7: 'sprites/passer_7.png',
+    },
+    // 場景貼圖（地板含地毯 9x8 格、右牆 9 格長、左牆 8 格長；程式依等距座標貼上）
+    scene: { floor: 'scene/floor.png', wall_r: 'scene/wall_r.png', wall_l: 'scene/wall_l.png' },
+    // 家具：w = 顯示寬度（場景像素）、ax/ay = 接地點在圖內的位置比例；counter 另有專用設定
+    props: {
+      table:   { src: 'props/table.png',   w: 26, ax: 0.5, ay: 0.93 },
+      barrels: { src: 'props/barrels.png', w: 26, ax: 0.5, ay: 0.90 },
+      pillar:  { src: 'props/pillar.png',  w: 15, ax: 0.5, ay: 0.95 },
+      stool:   { src: 'props/stool.png',   w: 12, ax: 0.5, ay: 0.95 },
+      plant:   { src: 'props/plant.png',   w: 18, ax: 0.5, ay: 0.96 },
+      counter: { src: 'props/counter.png', w: 80, cx: 0.1, cy: 4.7, shear: 0.165 },
     },
   },
 
@@ -244,7 +257,7 @@ GAME_DATA.npcs.forEach(n => Object.assign(n, STORY.npcs[n.id]));
 
 // 素材版本號：換圖後請把這個字串改掉（例如改成日期），瀏覽器就會重新下載，不會用到舊快取。
 // （用程式載入的圖片，Ctrl+F5 不一定會重新抓，所以所有素材路徑都自動加上 ?v=版本）
-STORY.version = '20251113d';
+STORY.version = '20251113e';
 (function bust(o) {
   for (const k in o) {
     if (typeof o[k] === 'string') o[k] += '?v=' + STORY.version;

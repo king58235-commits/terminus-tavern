@@ -70,9 +70,10 @@ const BarScene = (function () {
   }
 
   // ---------- 靜態背景（地板、牆、窗、酒架） ----------
-  function buildStatic() {
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  function buildStatic(K, tex) {
+    tex = tex || {};
+    const cv = document.createElement('canvas'); cv.width = Math.round(W * K); cv.height = Math.round(H * K);
+    const g = cv.getContext('2d'); g.setTransform(K, 0, 0, K, 0, 0); g.imageSmoothingEnabled = false;
     g.fillStyle = '#080a11'; g.fillRect(0, 0, W, H);
     // 外圍星點
     for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(hash(i * 3) % W, hash(i * 7 + 1) % 30, 1, 1); }
@@ -88,9 +89,14 @@ const BarScene = (function () {
       const odd = (gx + gy) & 1;
       dia(g, p.x, p.y + 8, 16, 8, rug ? (odd ? C.rugA : C.rugB) : (odd ? C.floorA : C.floorB));
     }
-    // 地毯金邊
-    const q = [iso(2, 3), iso(7, 3), iso(7, 7), iso(2, 7)];
-    for (let i = 0; i < 4; i++) line(g, q[i].x, q[i].y + 8 * 0, q[(i + 1) % 4].x, q[(i + 1) % 4].y, C.rugEdge);
+    if (tex.floor) {      // 正式美術：整張地板貼圖（含地毯）依等距座標貼上
+      g.save(); g.transform(16, 8, -16, 8, OX, OY); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(tex.floor, 0, 0, GX, GY); g.restore();
+    } else {
+      // 地毯金邊
+      const q = [iso(2, 3), iso(7, 3), iso(7, 7), iso(2, 7)];
+      for (let i = 0; i < 4; i++) line(g, q[i].x, q[i].y + 8 * 0, q[(i + 1) % 4].x, q[(i + 1) % 4].y, C.rugEdge);
+    }
     // 地板上的窗光（冷色）
     g.save();
     [[0.7, 1.9], [2.3, 3.5], [3.9, 4.8]].forEach(w => {
@@ -141,6 +147,9 @@ const BarScene = (function () {
         g.fillStyle = c; g.fillRect(x, yb - off, 1, 1);
       }
     }
+    // 正式美術：牆面貼圖（右牆沿 gx 方向、左牆沿 gy 方向）
+    if (tex.wall_r) { g.save(); g.transform(16, 8, 0, 1, OX, OY); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(tex.wall_r, 0, -WH, GX, WH); g.restore(); }
+    if (tex.wall_l) { g.save(); g.transform(-16, 8, 0, 1, OX, OY); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(tex.wall_l, 0, -WH, GY, WH); g.restore(); }
     // 牆角亮線
     g.fillStyle = '#6f80a8'; g.fillRect(OX, OY - WH, 1, WH);
     return cv;
@@ -152,6 +161,23 @@ const BarScene = (function () {
     if (off % 6 === 0) return dark;
     if (((x + (row & 1) * 6) % 12) === 0) return dark;
     return base;
+  }
+
+  // ---------- 圖片載入（有圖就用圖，沒圖或尚未載入就用程式繪製） ----------
+  const imgCache = {};
+  function loadImg(path) {
+    if (!path) return null;
+    if (!imgCache[path]) { const im = new Image(); im.src = path; imgCache[path] = im; }
+    const im = imgCache[path]; return im.complete && im.naturalWidth ? im : null;
+  }
+  const PROPS = () => S.assets.props || {};
+  // 道具：x,y 為「接地點」（場景像素座標），依 ax/ay（圖內比例）對齊；回傳是否成功使用圖片
+  function drawProp(g, name, x, y) {
+    const m = PROPS()[name], im = m && loadImg(m.src); if (!im) return false;
+    const w = m.w, h = im.naturalHeight / im.naturalWidth * w;
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(im, x - (m.ax == null ? 0.5 : m.ax) * w, y - (m.ay == null ? 0.95 : m.ay) * h, w, h);
+    g.imageSmoothingEnabled = false; return true;
   }
 
   // ---------- 人物（像素小人） ----------
@@ -168,7 +194,7 @@ const BarScene = (function () {
     const fr = Math.floor(t / 220) % 2, wf = Math.floor(t / 130) % 4;
     // 影子
     g.fillStyle = 'rgba(0,0,0,.38)'; g.fillRect(x - 5, y - 1, 10, 2); g.fillRect(x - 3, y + 1, 6, 1);
-    const im = p.id && sheetFor(p.id);
+    const sid = p.sprite || p.id, im = sid && sheetFor(sid);
     if (im) {
       // 站立待機只用固定的第 0 格（兩格輪播會因姿勢差異而抖動），改用很輕微的平滑呼吸浮動
       const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : 0, row = dir === 1 ? 0 : 1;
@@ -244,24 +270,50 @@ const BarScene = (function () {
     const lights = [];
     const wood = { top: C.woodL, l: C.wood, r: C.woodD, hi: '#c9915a' };
     const stone = { top: '#b9b4a6', l: '#8a867a', r: '#68655c', hi: '#d5d0c2' };
-    // 吧台
-    for (let gx = 5; gx <= 8; gx++) add(gx + 1.5 + 0.1, g => box(g, gx, 1, 1, 1, 12, { top: '#c8b08c', l: '#7a5a3a', r: '#5d4229', hi: '#e0cba6', bands: [3, 8], bl: 'rgba(0,0,0,.3)' }));
-    add(5 + 1.5 + 0.3, g => { const p = iso(5.5, 1.5); g.fillStyle = '#cfe4f0'; g.fillRect(p.x - 1, p.y - 16, 2, 3); });
-    add(8 + 1.5 + 0.3, g => { const p = iso(7.5, 1.5); g.fillStyle = '#cfe4f0'; g.fillRect(p.x - 1, p.y - 16, 2, 3); g.fillStyle = '#e8b45c'; g.fillRect(p.x + 3, p.y - 17, 2, 4); });
-    // 酒桶
-    [[0.15, 1.0], [0.15, 2.0], [0.2, 3.05]].forEach(b => add(b[0] + b[1] + 0.8, g => box(g, b[0], b[1], 0.8, 0.8, 17, { top: '#9a6a3c', l: '#7a4c26', r: '#5a381c', hi: '#b98550', bands: [3, 9, 14], bl: '#2a2a30' })));
+    // 吧台：有貼圖時用 4 片切片（讓人物能正確站在吧台前後），沒有就用程式畫的方塊
+    function counterSlice(g, i) {
+      const m = PROPS().counter, im = m && loadImg(m.src); if (!im) return false;
+      const wU = m.w, hU = im.naturalHeight / im.naturalWidth * wU;
+      g.save(); g.beginPath(); const x0 = i === 0 ? -1000 : 208 + 16 * i, x1 = i === 3 ? 1000 : 224 + 16 * i;
+      g.rect(x0, -1000, x1 - x0, 3000); g.clip();
+      g.transform(1, m.shear, 0, 1, 200, 82);       // 左端角對到 iso(5,2) 抬高 12，並把斜度拉成 2:1
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(im, -m.cx, -m.cy, wU, hU); g.restore(); g.imageSmoothingEnabled = false; return true;
+    }
+    for (let i = 0; i < 4; i++) {
+      const gx = 5 + i;
+      add(7 + i + 0.1, g => { if (!counterSlice(g, i)) box(g, gx, 1, 1, 1, 12, { top: '#c8b08c', l: '#7a5a3a', r: '#5d4229', hi: '#e0cba6', bands: [3, 8], bl: 'rgba(0,0,0,.3)' }); });
+    }
+    add(5 + 1.5 + 0.3, g => { if (loadImg((PROPS().counter || {}).src)) return; const p = iso(5.5, 1.5); g.fillStyle = '#cfe4f0'; g.fillRect(p.x - 1, p.y - 16, 2, 3); });
+    add(8 + 1.5 + 0.3, g => { if (loadImg((PROPS().counter || {}).src)) return; const p = iso(7.5, 1.5); g.fillStyle = '#cfe4f0'; g.fillRect(p.x - 1, p.y - 16, 2, 3); g.fillStyle = '#e8b45c'; g.fillRect(p.x + 3, p.y - 17, 2, 4); });
+    // 酒桶（一組）
+    add(3.7, g => {
+      const p = iso(0.7, 2.2);
+      if (drawProp(g, 'barrels', p.x, p.y)) return;
+      [[0.15, 1.0], [0.15, 2.0], [0.2, 3.05]].forEach(bb => box(g, bb[0], bb[1], 0.8, 0.8, 17, { top: '#9a6a3c', l: '#7a4c26', r: '#5a381c', hi: '#b98550', bands: [3, 9, 14], bl: '#2a2a30' }));
+    });
     // 柱子
     [[4, 1], [1, 7]].forEach(p => {
-      add(p[0] + p[1] + 1, g => { box(g, p[0] + .2, p[1] + .2, .6, .6, 42, { top: '#8b91a0', l: '#6a7080', r: '#4c515e', hi: '#a3a9b8' }); box(g, p[0] + .05, p[1] + .05, .9, .9, 5, { top: '#232630', l: '#171a22', r: '#101218', hi: '#3a3f4c' }, 38); box(g, p[0] + .05, p[1] + .05, .9, .9, 3, { top: '#4a4f5c', l: '#3a3f4c', r: '#2a2e38' }); });
+      add(p[0] + p[1] + 1, g => {
+        const pt = iso(p[0] + .5, p[1] + .5);
+        if (drawProp(g, 'pillar', pt.x, pt.y)) return;
+        box(g, p[0] + .2, p[1] + .2, .6, .6, 42, { top: '#8b91a0', l: '#6a7080', r: '#4c515e', hi: '#a3a9b8' }); box(g, p[0] + .05, p[1] + .05, .9, .9, 5, { top: '#232630', l: '#171a22', r: '#101218', hi: '#3a3f4c' }, 38); box(g, p[0] + .05, p[1] + .05, .9, .9, 3, { top: '#4a4f5c', l: '#3a3f4c', r: '#2a2e38' });
+      });
     });
     // 植栽
-    add(0.6 + 5.2, g => { const p = iso(0.6, 5.0); box(g, 0.35, 4.7, 0.5, 0.5, 5, { top: '#6a4a30', l: '#5a3c26', r: '#42291a' }); g.fillStyle = '#3f8a54'; g.fillRect(p.x - 4, p.y - 14, 9, 7); g.fillStyle = '#58b06c'; g.fillRect(p.x - 2, p.y - 18, 5, 6); g.fillStyle = '#2d6a40'; g.fillRect(p.x - 5, p.y - 10, 3, 4); });
+    add(0.65 + 5.2, g => {
+      const p = iso(0.65, 5.1);
+      if (drawProp(g, 'plant', p.x, p.y)) return;
+      box(g, 0.35, 4.7, 0.5, 0.5, 5, { top: '#6a4a30', l: '#5a3c26', r: '#42291a' }); g.fillStyle = '#3f8a54'; g.fillRect(p.x - 4, p.y - 14, 9, 7); g.fillStyle = '#58b06c'; g.fillRect(p.x - 2, p.y - 18, 5, 6); g.fillStyle = '#2d6a40'; g.fillRect(p.x - 5, p.y - 10, 3, 4);
+    });
 
     // 桌椅、座位
     const seats = [];
     tables.forEach((t, ti) => {
       const key = t.gx + t.gy + 1;
       add(key, g => {
+        const pt = iso(t.gx + .5, t.gy + .5);
+        if (drawProp(g, 'table', pt.x, pt.y)) return;
         box(g, t.gx + .4, t.gy + .4, .2, .2, 8, { top: '#6b4a30', l: '#5a3c26', r: '#42291a' });
         box(g, t.gx + .06, t.gy + .06, .88, .88, 3, { top: '#5aa59a', l: '#3f857a', r: '#2f6a62', hi: '#8fd0c4' }, 8);
         const p = iso(t.gx + .5, t.gy + .5);
@@ -269,10 +321,10 @@ const BarScene = (function () {
         g.fillStyle = (Math.floor(performance.now() / 140) & 1) ? '#ffd36a' : '#ffb54a'; g.fillRect(p.x + 3, p.y - 19, 1, 2);
         g.fillStyle = '#e9e4d4'; g.fillRect(p.x - 3, p.y - 14, 3, 1);
       });
-      const pc = iso(t.gx + .5, t.gy + .5); lights.push({ x: pc.x + 3, y: pc.y - 18, r: 26 });
+      const pc = iso(t.gx + .5, t.gy + .5); lights.push(PROPS().table ? { x: pc.x - 3.4, y: pc.y - 27, r: 26 } : { x: pc.x + 3, y: pc.y - 18, r: 26 });
       const sBR = { id: ti + 'a', gx: t.gx + .5, gy: t.gy - .5, dir: -1, table: ti, occ: null, tile: [t.gx, t.gy - 1] };
       const sBL = { id: ti + 'b', gx: t.gx - .5, gy: t.gy + .5, dir: 1, table: ti, occ: null, tile: [t.gx - 1, t.gy] };
-      [sBR, sBL].forEach(s => { seats.push(s); add(s.gx + s.gy - 0.3, g => { if (s.occ && sheetFor(s.occ)) return; box(g, s.gx - .2, s.gy - .2, .4, .4, 6, { top: '#c9c4b4', l: '#8a867a', r: '#68655c', hi: '#e2ddcc' }); }); });
+      [sBR, sBL].forEach(s => { seats.push(s); add(s.gx + s.gy - 0.3, g => { const o = people.find(q => !q.away && q.mode === 'sit' && Math.abs(q.gx - s.gx) < 0.02 && Math.abs(q.gy - s.gy) < 0.02); if (o && sheetFor(o.sprite || o.id)) return; const sp = iso(s.gx, s.gy); if (drawProp(g, 'stool', sp.x, sp.y)) return; box(g, s.gx - .2, s.gy - .2, .4, .4, 6, { top: '#c9c4b4', l: '#8a867a', r: '#68655c', hi: '#e2ddcc' }); }); });
     });
     // 牆燈光
     [[OX + 2.8 * 16, OY + 22], [OX + 6.8 * 16, OY + 20], [OX - 2 * 16, OY + 18], [OX - 5.2 * 16, OY + 26]].forEach(p => lights.push({ x: p[0], y: p[1], r: 30 }));
@@ -292,7 +344,8 @@ const BarScene = (function () {
     const passers = [];
     for (let i = 0; i < 4; i++) {
       const cand = freeSeats(), s = cand[Math.floor(r() * cand.length)]; s.occ = 'p' + i;
-      const p = mk({ kind: 'passer', id: null, pid: 'p' + i, look: pool[i % pool.length], gx: s.gx, gy: s.gy, dir: s.dir, seat: s, timer: 6 + r() * 16 });
+      const look = pool[i % pool.length];
+      const p = mk({ kind: 'passer', id: null, sprite: 'passer_' + S.passers.indexOf(look), pid: 'p' + i, look, gx: s.gx, gy: s.gy, dir: s.dir, seat: s, timer: 6 + r() * 16 });
       people.push(p); passers.push(p);
     }
     const waiter = mk({ kind: 'waiter', id: 'waiter', look: S.waiter, gx: 5.5, gy: 2.5, dir: 1, mode: 'stand', timer: 2 });
@@ -382,7 +435,7 @@ const BarScene = (function () {
     });
     let hover = null;
 
-    const stat = buildStatic();
+    const stat = null;
     return { people, furn, lights, update, stat, setHover: v => (hover = v), get hover() { return hover; } };
   }
 
@@ -402,10 +455,14 @@ const BarScene = (function () {
     }
     sizeCanvas(); window.addEventListener('stagefit', sizeCanvas);
     const w = create(root, opts);
-    let alive = true, last = performance.now(), raf;
+    let alive = true, last = performance.now(), raf, stat = null, statSig = '';
 
     function render(now) {
-      g.drawImage(w.stat, 0, 0);
+      // 靜態背景（地板、牆）：依目前縮放倍率與貼圖載入狀態重建並快取
+      const SC = S.assets.scene || {}, tex = { floor: loadImg(SC.floor), wall_r: loadImg(SC.wall_r), wall_l: loadImg(SC.wall_l) };
+      const Kc = cv.width / W, sig = Kc + '|' + !!tex.floor + !!tex.wall_r + !!tex.wall_l;
+      if (sig !== statSig) { stat = buildStatic(Kc, tex); statSig = sig; }
+      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(stat, 0, 0); g.restore();
       const list = w.furn.map(f => ({ key: f.key, fn: f.fn }));
       w.people.forEach(p => {
         if (p.away) return;
