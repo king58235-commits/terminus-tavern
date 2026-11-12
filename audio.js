@@ -7,7 +7,7 @@
 const Sound = (function () {
   'use strict';
   const KEY = 'km_audio_v2';   // v2：BGM 音量改為曲線對應，舊設定不沿用
-  const st = { bgm: 0.5, sfx: 0.9, muted: false };
+  const st = { bgm: 0.5, sfx: 0.9, amb: 0.3, muted: false };   // amb：環境低語（酒館背景的低頻噪音）
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -77,7 +77,7 @@ const Sound = (function () {
       sparkle(t) { for (let i = 0; i < 9; i++) tone(t + i * 0.06, rnd(2200, 5200), 0.5, { vol: 0.04, wet: 0.6 }); return 0.9; },
       unlock(t) { [784, 988, 1175, 1568].forEach((f, i) => tone(t + i * 0.1, f, 0.8, { vol: 0.09, wet: 0.6 })); S.sparkle(t + 0.3); return 1.2; },
       bell(t, n) { n = n || 3; for (let k = 0; k < n; k++) [1, 2.76, 5.4, 8.9].forEach((m, i) => tone(t + k * 0.95, 392 * m, 2.8, { vol: 0.1 / (i + 1), wet: 0.5 })); return n * 0.95 + 2.8; },
-      murmurClink(t) { S.clink(t, 0.25); return 0.6; },
+      murmurClink(t, k) { S.clink(t, 0.25 * (k == null ? 1 : k)); return 0.6; },
     };
     return S;
   }
@@ -112,16 +112,23 @@ const Sound = (function () {
   document.addEventListener('visibilitychange', () => { if (!bgm || !bgmWanted) return; if (document.hidden) bgm.pause(); else { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); } });
 
   // ---------- 環境音（酒館低語＋偶爾的杯子聲） ----------
-  function ambient(on) {
-    if (!on) { if (ambNode) { try { ambNode.stop(); } catch (e) {} ambNode = null; } clearInterval(ambTimer); ambTimer = null; return; }
-    if (ambNode || st.muted || !ensure()) return;
-    const nb = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate), d = nb.getChannelData(0); let last = 0;
+  // 環境音走 master（會被 SFX_MAKEUP 放大），所以基準要很小；amb 滑桿 30% = 基準 0.009，可調到 0
+  const ambLevel = () => 0.03 * st.amb;
+  function buildAmbient(c, dest, level) {
+    const nb = c.createBuffer(1, c.sampleRate * 3, c.sampleRate), d = nb.getChannelData(0); let last = 0;
     for (let i = 0; i < d.length; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }   // 棕噪音
-    const s = ctx.createBufferSource(); s.buffer = nb; s.loop = true; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
-    const g = ctx.createGain(); g.gain.value = 0.05; const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.12; lg.gain.value = 0.02; lfo.connect(lg); lg.connect(g.gain); lfo.start();
-    s.connect(lp); lp.connect(g); g.connect(master); s.start(); ambNode = s;
-    ambTimer = setInterval(() => { if (!st.muted && Math.random() < 0.6) play('murmurClink'); }, 7000);
+    const s = c.createBufferSource(); s.buffer = nb; s.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520;
+    const g = c.createGain(); g.gain.value = level; const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.12; lg.gain.value = level * 0.4; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    s.connect(lp); lp.connect(g); g.connect(dest); s.start(); return { s, g, lg };
   }
+  let ambG = null, ambLg = null;
+  function ambient(on) {
+    if (!on) { if (ambNode) { try { ambNode.stop(); } catch (e) {} ambNode = null; ambG = null; } clearInterval(ambTimer); ambTimer = null; return; }
+    if (ambNode || st.muted || !ensure()) return;
+    const r = buildAmbient(ctx, master, ambLevel()); ambNode = r.s; ambG = r.g; ambLg = r.lg;
+    ambTimer = setInterval(() => { if (!st.muted && st.amb > 0 && Math.random() < 0.6) play('murmurClink', st.amb / 0.3); }, 7000);
+  }
+  function applyAmb() { if (ambG) { ambG.gain.value = ambLevel(); ambLg.gain.value = ambLevel() * 0.4; } }
 
   // ---------- 音量面板 ----------
   let panel = null, buttons = [];
@@ -132,11 +139,13 @@ const Sound = (function () {
     panel.innerHTML = `<h4>聲音</h4>
       <label>音樂 <input type="range" min="0" max="100" id="aBgm"></label>
       <label>音效 <input type="range" min="0" max="100" id="aSfx"></label>
+      <label>環境 <input type="range" min="0" max="100" id="aAmb"></label>
       <label class="chk"><input type="checkbox" id="aMute"> 靜音</label>`;
     stage.appendChild(panel);
-    panel.querySelector('#aBgm').value = Math.round(st.bgm * 100); panel.querySelector('#aSfx').value = Math.round(st.sfx * 100); panel.querySelector('#aMute').checked = st.muted;
+    panel.querySelector('#aBgm').value = Math.round(st.bgm * 100); panel.querySelector('#aSfx').value = Math.round(st.sfx * 100); panel.querySelector('#aAmb').value = Math.round(st.amb * 100); panel.querySelector('#aMute').checked = st.muted;
     panel.querySelector('#aBgm').oninput = e => { st.bgm = e.target.value / 100; applyVol(); save(); };
     panel.querySelector('#aSfx').oninput = e => { st.sfx = e.target.value / 100; applyVol(); save(); };
+    panel.querySelector('#aAmb').oninput = e => { st.amb = e.target.value / 100; applyAmb(); save(); };
     panel.querySelector('#aSfx').onchange = () => play('select');
     panel.querySelector('#aMute').onchange = e => { st.muted = e.target.checked; applyVol(); save(); refreshButtons(); if (st.muted) ambient(false); };
     document.addEventListener('pointerdown', e => { if (panel.classList.contains('on') && !panel.contains(e.target) && !e.target.closest('.audio-btn')) panel.classList.remove('on'); });
@@ -159,9 +168,17 @@ const Sound = (function () {
     return { name, dur: +(+dur).toFixed(2), peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), audibleMs: Math.round(nz / 44.1) };
   }
 
+  // 離線量測環境音的 RMS（level 省略則用目前設定）；用來確認環境音不會比 BGM 與音效吵
+  async function measureAmbient(level) {
+    const oc = new OfflineAudioContext(2, 44100 * 3, 44100), g = oc.createGain(); g.gain.value = st.sfx * SFX_MAKEUP; g.connect(limiter(oc));
+    buildAmbient(oc, g, level == null ? ambLevel() : level); const buf = await oc.startRendering(), d = buf.getChannelData(0); let sum = 0, peak = 0;
+    for (let i = 44100; i < d.length; i++) { sum += d[i] * d[i]; if (Math.abs(d[i]) > peak) peak = Math.abs(d[i]); }
+    return { level: +(level == null ? ambLevel() : level).toFixed(4), rms: +Math.sqrt(sum / (d.length - 44100)).toFixed(4), peak: +peak.toFixed(3) };
+  }
+
   return {
     names: ['click', 'select', 'blip', 'next', 'whoosh', 'thump', 'creak', 'doorOpen', 'footsteps', 'clink', 'result', 'sparkle', 'unlock', 'bell'],
-    measure, bindButton,
+    measure, measureAmbient, bindButton,
     unlock() { ensure(); if (!bgm) bgmStart(); },
     bgmStart, duck, ambient,
     click: () => play('click'), select: () => play('select'), next: () => play('next'), whoosh: () => play('whoosh'),

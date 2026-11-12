@@ -125,6 +125,7 @@
         <button class="rstbtn" id="rst">重置存檔</button>`;
     }
     const ta = document.createElement('button'); ta.className = 'btn audio-btn title-audio'; ta.title = '聲音'; t.appendChild(ta); Sound.bindButton(ta);
+    const da = document.createElement('a'); da.className = 'btn doc-btn'; da.href = 'docs/design.html'; da.target = '_blank'; da.rel = 'noopener'; da.textContent = '📖 專案說明與設計理念'; t.appendChild(da);
     $('#startBtn').onclick = startGame;
     $('#rst').onclick = resetAll;
   }
@@ -271,7 +272,7 @@
   // ---------- HUD ----------
   $('#plan').onchange = e => { planner = e.target.checked; if (scene === 'mix') { renderInfo(); renderPrev(); } };
   Sound.bindButton($('#audioBtn'));
-  document.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.classList.contains('audio-btn') && b.id !== 'startBtn' && !b.classList.contains('dskip')) Sound.click(); }, true);
+  document.addEventListener('click', e => { const b = e.target.closest('button, a.doc-btn'); if (b && !b.classList.contains('audio-btn') && b.id !== 'startBtn' && !b.classList.contains('dskip')) Sound.click(); }, true);
   document.addEventListener('pointerdown', () => Sound.unlock(), { once: true });
   $('#endNight').onclick = endNight;
   $('#hudReset').onclick = resetAll;

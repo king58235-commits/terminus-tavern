@@ -1,0 +1,73 @@
+:root{
+  --bg:#14101a; --panel:#1d1724; --panel2:#251d2e; --line:#3b3046; --ink:#eadfd0; --mute:#a59886;
+  --gold:#e8b45c; --amber:#c9803c; --good:#7fc48a; --bad:#e0765f; --blue:#7fc4e8;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 "Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+a{color:var(--gold)}
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:10px 22px;background:#100c15ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+header.top h1{font-size:18px;margin:0;color:var(--gold);letter-spacing:.08em}
+header.top .sp{flex:1}
+.btn{display:inline-block;padding:6px 16px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--ink);text-decoration:none;font-size:14px}
+.btn:hover{border-color:var(--gold)}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:34px;max-width:1240px;margin:0 auto;padding:26px 22px 80px}
+nav.toc{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;font-size:14px;border-right:1px solid var(--line);padding-right:14px}
+nav.toc a{display:block;color:var(--mute);text-decoration:none;padding:3px 0}
+nav.toc a:hover{color:var(--gold)}
+nav.toc .sub a{padding-left:14px;font-size:13px}
+nav.toc .grp{margin:12px 0 4px;color:var(--gold);font-size:12px;letter-spacing:.2em}
+main{min-width:0}
+section{margin-bottom:56px}
+h2{font-size:26px;margin:0 0 14px;color:var(--gold);padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-size:19px;margin:34px 0 10px;color:#f3d9a8}
+h4{font-size:16px;margin:20px 0 6px;color:var(--blue)}
+p{margin:10px 0}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+code,.k{font-family:Consolas,"Courier New",monospace;background:#0e0a13;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:.9em;color:#f2c98a}
+.lead{font-size:17px;color:#f1e6d6}
+.callout{border-left:4px solid var(--gold);background:var(--panel);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.callout.plan{border-color:var(--blue)}
+.callout.warn{border-color:var(--bad)}
+.callout b.t{display:block;color:var(--gold);margin-bottom:2px;font-size:14px;letter-spacing:.1em}
+.callout.plan b.t{color:var(--blue)}.callout.warn b.t{color:var(--bad)}
+.formula{background:#0e0a13;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:12px 0;font-family:Consolas,"Courier New",monospace;font-size:14.5px;line-height:1.9;overflow-x:auto;color:#f4e3c3}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;background:var(--panel)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--gold);font-weight:700;white-space:nowrap}
+td.n{text-align:center;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+tr.grp td{background:#2a2033;color:var(--gold);font-weight:700}
+.tag{display:inline-block;font-size:12px;padding:0 8px;border-radius:99px;border:1px solid var(--line);margin:1px 3px 1px 0;color:var(--mute)}
+.tag.like{color:var(--good);border-color:#7fc48a66}.tag.hate{color:var(--bad);border-color:#e0765f66}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.flow .b{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px}
+.flow .b.hl{border-color:var(--gold);color:var(--gold)}
+.flow .a{color:var(--mute)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.card h4{margin-top:0}
+/* 試算器 */
+.calc{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:18px;margin:16px 0}
+.calc .row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.calc label{display:flex;flex-direction:column;font-size:13px;color:var(--mute);gap:3px}
+.calc select,.calc input{background:#0e0a13;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;font-size:14px;min-width:120px}
+.calc input[type=number]{width:90px;min-width:0}
+.bars .r{display:grid;grid-template-columns:64px 1fr 40px;gap:8px;align-items:center;margin:4px 0;font-size:14px}
+.track{position:relative;height:12px;background:#0b0810;border-radius:99px;border:1px solid var(--line)}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#8a5a2b,#e8b45c)}
+.mk{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--blue);border-radius:2px;box-shadow:0 0 5px var(--blue)}
+.out h4{margin:14px 0 4px}
+.steps div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:3px 0;font-size:14px}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.dlg{background:#0e0a13;border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:6px;font-size:14.5px}
+.dlg div{margin:4px 0}.dlg .s{color:var(--mute);font-style:italic}
+.big{font-size:22px;color:var(--gold);font-weight:700}
+.prog{color:var(--mute);font-size:13px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.toc{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:0 0 12px}
+  .cols{grid-template-columns:1fr}
+}
+.tag{white-space:nowrap}

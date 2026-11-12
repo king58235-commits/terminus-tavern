@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>終末酒吧 — 專案說明與設計理念</title>
+<link rel="stylesheet" href="design.css">
+</head>
+<body>
+<header class="top">
+  <h1>終末酒吧 · 專案說明與設計理念</h1>
+  <span class="sp"></span>
+  <a class="btn" href="../index.html">← 回到遊戲</a>
+</header>
+
+<div class="layout">
+<nav class="toc">
+  <div class="grp">總覽</div>
+  <a href="#overview">這是什麼</a>
+  <a href="#flow">遊戲流程</a>
+  <div class="grp">系統</div>
+  <a href="#cocktail">調酒系統</a>
+  <div class="sub">
+    <a href="#c-goal">設計目標與核心想法</a>
+    <a href="#c-ingredients">欄位與材料</a>
+    <a href="#c-product">成品如何形成</a>
+    <a href="#c-quality">品質分</a>
+    <a href="#c-guest">客人的喜好</a>
+    <a href="#c-daily">每日隨機</a>
+    <a href="#c-score">契合分與好感</a>
+    <a href="#c-feedback">回饋與玩家學習</a>
+    <a href="#c-balance">平衡概況</a>
+    <a href="#c-knobs">可調整的參數</a>
+    <a href="#c-open">設計取捨與待討論</a>
+    <a href="#c-calc">互動試算器</a>
+  </div>
+  <a href="#guests">客人、好感與事件</a>
+  <a href="#bar">酒吧場景</a>
+  <a href="#dialogue">對話與事件演出</a>
+  <a href="#audio">音訊</a>
+  <div class="grp">製作</div>
+  <a href="#art">美術與 AI 製作流程</a>
+  <a href="#data">資料結構與修改方式</a>
+  <a href="#limits">已知限制與後續</a>
+</nav>
+
+<main>
+
+<!-- ============================ 總覽 ============================ -->
+<section id="overview">
+  <h2>這是什麼</h2>
+  <p class="lead">《終末酒吧》是一個以「<b>調酒送禮</b>」為核心的角色好感度原型。玩家扮演酒吧老闆，每晚有 3 位特殊客人光顧，依客人的口味<b>自由搭配材料</b>調出一杯酒，送出後依「品質」與「契合度」決定好感變化；好感跨過門檻就能解鎖角色事件。</p>
+  <div class="cols">
+    <div class="card"><h4>目的</h4>
+      <p>① 示範：用 AI 協作，能多快把一個系統構想做成<b>可以實際操作</b>的原型。<br>
+      ② 提案：「自由配方 + 屬性向量」的調酒計分方案，供企劃討論（見 <a href="#cocktail">調酒系統</a>）。</p></div>
+    <div class="card"><h4>目前狀態</h4>
+      <p>可玩的原型。<b>數值與劇情文本都是初版佔位</b>，沒有經過玩家測試；角色、劇情與美術皆為原創（AI 生成），與任何既有專案無關。</p></div>
+  </div>
+  <div class="callout plan"><b class="t">給企劃的閱讀建議</b>
+    若你只關心「調酒分數怎麼算、遊戲模式怎麼設計」，直接看 <a href="#cocktail">調酒系統</a>，那一章最完整；最後的 <a href="#c-calc">互動試算器</a> 可以自己配配看，每一步的分數都會攤開來。<br>
+    遊戲內勾選右上角的「<b>企劃模式</b>」也能看到客人今天的理想風味與預測分數。</div>
+</section>
+
+<section id="flow">
+  <h2>遊戲流程</h2>
+  <div class="flow">
+    <span class="b">入口頁（推開門板）</span><span class="a">→</span>
+    <span class="b">序章（第一次才有）</span><span class="a">→</span>
+    <span class="b">酒吧場景</span><span class="a">→</span>
+    <span class="b">點選特殊客人</span><span class="a">→</span>
+    <span class="b hl">有未讀事件？先播事件</span><span class="a">→</span>
+    <span class="b hl">調酒</span><span class="a">→</span>
+    <span class="b">送出 → 客人反應</span><span class="a">→</span>
+    <span class="b">結算（星級、好感）</span><span class="a">→</span>
+    <span class="b">解鎖事件？</span><span class="a">→</span>
+    <span class="b">打烊 → 下一夜</span>
+  </div>
+  <ul>
+    <li><b>一夜</b>：從 6 位特殊客人中輪替 3 位光顧；每位客人每晚最多 2 杯。</li>
+    <li><b>事件觸發規則統一</b>：「有未讀事件 → 先播事件，再調酒」。第一次見面（好感 0）的初見事件也是同一條規則，不是特例。</li>
+    <li><b>好感門檻</b>：0／25／50／75／100，每位角色共 5 段事件。</li>
+    <li><b>存檔</b>：存在瀏覽器（localStorage），入口頁與遊戲內都有「重置存檔」。</li>
+  </ul>
+</section>
+
+<!-- ============================ 調酒 ============================ -->
+<section id="cocktail">
+  <h2>調酒系統</h2>
+  <p>這是這個原型最想請企劃檢視的部分。下面先講<b>為什麼這樣設計</b>，再講每一步怎麼算，最後列出<b>可以調的旋鈕</b>和<b>還沒決定的取捨</b>。本章所有表格都是<b>直接從資料檔（<code>data.js</code>）即時產生</b>的，改了數值，這裡會跟著變。</p>
+
+  <h3 id="c-goal">1. 設計目標與核心想法</h3>
+  <p><b>要解決的問題</b>：材料可以自由搭配，組合數量會爆炸。目前 27 種材料、5 個欄位（每欄可不選），就有 <b>8,820</b> 種組合；不可能一個一個指定「這杯酒值幾分」或「某客人喜不喜歡」。</p>
+  <p><b>做法</b>：不做「配方 → 分數」對照表，而是讓<b>每個材料帶一組風味屬性</b>（甜、酸、苦、辣、濃度、香氣），成品風味就是材料屬性的加權總和；<b>客人的喜好也用同一組屬性表示</b>（「理想風味」）。分數取決於「成品離客人的理想有多遠」。</p>
+  <div class="flow">
+    <span class="b">材料屬性</span><span class="a">→ 加權加總 →</span>
+    <span class="b hl">成品風味（6 個數字）</span><span class="a">→</span>
+    <span class="b">與客人今日理想比較</span><span class="a">→</span>
+    <span class="b hl">契合分</span>
+  </div>
+  <p>這樣新增一個材料或一位客人，<b>只需要填幾個數字</b>，不用窮舉組合，也不會出現漏掉某種組合的洞。</p>
+  <p><b>兩層分數</b>（刻意分開）：</p>
+  <ul>
+    <li><b>品質分</b>＝這杯酒<b>調得好不好</b>（酸甜平衡、有沒有過頭、有沒有衝突），<b>與客人無關</b>。</li>
+    <li><b>契合分</b>＝<b>這位客人今天愛不愛</b>，由「風味距離」與「喜好標籤」決定，再乘上品質係數。</li>
+  </ul>
+  <p>分開的好處：企劃可以分別調「做得好不好」和「合不合口味」，也方便之後讓品質分去影響別的獎勵（見 <a href="#c-open">待討論</a>）。</p>
+  <p><b>招牌配方</b>是額外的「發現的樂趣」層：少量命名配方（例如莫吉托），命中就顯示名稱並加品質分；沒命中的組合也能玩，不會被擋住。</p>
+
+  <h3 id="c-ingredients">2. 欄位與材料</h3>
+  <p>共五個欄位，<b>每欄最多選一種，只有基酒必選</b>。越後面的欄位「影響力」越小，扮演微調和加成的角色；基酒決定整杯酒的主體與濃度。</p>
+  <div class="tblwrap"><table id="t-slots"></table></div>
+  <p>六個風味維度，數值範圍 0–10。<b>果汁／汽水的「濃度」是負值</b>，代表稀釋（酒精感變淡）。</p>
+  <div class="tblwrap"><table id="t-ingredients"></table></div>
+  <p>「標籤」與風味無關，是給客人的<b>喜歡／討厭</b>用的（例如討厭薄荷，只要用了薄荷酒、薄荷葉或薄荷枝，不管其他部分調得多好都會扣分）。</p>
+
+  <h3 id="c-product">3. 成品如何形成</h3>
+  <div class="formula">成品風味[維度] = clamp( Σ 欄位影響力 × 材料屬性[維度] , 0 , 10 )</div>
+  <div id="example"></div>
+  <p><b>成品命名</b>：</p>
+  <ol>
+    <li>如果選的材料<b>包含</b>某個招牌配方的全部必要材料，就叫那個名字（同時命中多個時，取條件最多的那個，例如莫吉托比黛綺莉優先）。</li>
+    <li>否則自動命名：<code>〈最突出的風味〉+〈基酒名〉特調</code>，例如「酸爽蘭姆酒特調」。最突出的風味指甜／酸／苦／辣／香氣中最高且 ≥ 3 的那個，都不到 3 則叫「清淡」。</li>
+  </ol>
+  <div class="tblwrap"><table id="t-recipes"></table></div>
+
+  <h3 id="c-quality">4. 品質分（與客人無關）</h3>
+  <p>基礎 45 分，再依下列規則加減，最後夾在 0–100。目的是用<b>少數幾條容易理解的規則</b>表達「調得好不好」，而不是試圖模擬真實調酒學。</p>
+  <div class="tblwrap"><table>
+    <tr><th>規則</th><th>條件</th><th>分數</th></tr>
+    <tr><td>基礎分</td><td>—</td><td class="n">+45</td></tr>
+    <tr><td>搭配完整度</td><td>每多選一個副成分（輔酒／果汁／香料／裝飾）</td><td class="n">+4</td></tr>
+    <tr><td>酸甜平衡</td><td>甜 + 酸 &gt; 3 時：甜、酸越接近越高<br><code>20 × (1 − |甜−酸| ÷ max(甜,酸))</code></td><td class="n">0 ~ +20</td></tr>
+    <tr><td>不走酸甜路線</td><td>甜 + 酸 ≤ 3（例如純飲、烈酒導向）</td><td class="n">+10</td></tr>
+    <tr><td>單項過頭</td><td>甜／酸／苦／辣／香氣 任一 &gt; 8.5</td><td class="n">−(值−8.5)×10</td></tr>
+    <tr><td>酒精感太低</td><td>濃度 &lt; 2（像果汁）</td><td class="n">−(2−濃度)×6</td></tr>
+    <tr><td>酒精感太強</td><td>濃度 &gt; 9</td><td class="n">−(濃度−9)×10</td></tr>
+    <tr><td>苦酸衝突</td><td>苦 &gt; 5 且 酸 &gt; 5</td><td class="n">−15</td></tr>
+    <tr><td>甜苦打架</td><td>甜 &gt; 6 且 苦 &gt; 5</td><td class="n">−10</td></tr>
+    <tr><td>招牌配方</td><td>命中（加成見上表）</td><td class="n">+15 ~ +18</td></tr>
+  </table></div>
+  <p class="prog" id="q-dist"></p>
+
+  <h3 id="c-guest">5. 客人的喜好</h3>
+  <p>每位客人的喜好分成<b>兩層</b>，這是為了「玩家要讀得懂」與「分數要夠細」同時成立：</p>
+  <ul>
+    <li><b>玩家看得到的：固定個性</b>。角色卡上的「愛甜」「怕苦」「♥ 柑橘」「✕ 薄荷」。這是<b>角色不會變的特質</b>，玩家能憑它判斷方向。</li>
+    <li><b>玩家看不到的：理想風味向量與維度權重</b>。每位客人在六個維度各有一個「理想值」，以及對每個維度「在不在意」的權重。例如露娜的香氣權重是 1.8，其他維度是 1。分數就是用它算的。</li>
+  </ul>
+  <p>角色卡上的「愛X／怕X」不是另外填的，是<b>從理想值自動推出來的</b>：理想值 ≥ 6 顯示「愛X」，≤ 1.5 顯示「怕X」。所以卡上寫什麼，和實際算分一定一致。</p>
+  <div class="tblwrap"><table id="t-npcs"></table></div>
+
+  <h3 id="c-daily">6. 每日隨機</h3>
+  <ul>
+    <li><b>客人輪替</b>：每晚以「第幾夜」當亂數種子，從 6 位客人中抽 3 位。同一晚重新整理畫面，客人不會變。</li>
+    <li><b>今日心情</b>：每位客人每晚有一個「今天想喝偏X／比較不X」的心情，讓<b>他當天的理想值在某一個維度偏移 ±2</b>。這是玩家每晚都要重新判斷的原因，也是「每日隨機要求」的來源。</li>
+  </ul>
+  <div class="callout warn"><b class="t">設計過的坑：心情不能和個性打架</b>
+    最早的版本讓心情隨機落在任何維度，結果出現角色卡寫「愛辣」，氣泡卻說「今天想喝比較不辣的」，玩家無法判斷該信哪個。<br>
+    <b>現在的規則</b>：心情只會落在「沒有明確個性」的維度；如果某個角色每個維度都有個性，就只允許<b>強化</b>自己的個性（愛辣的人今天更想吃辣），絕不反過來。已用程式抽查 360 個心情，零衝突。</div>
+
+  <h3 id="c-score">7. 契合分與好感變化</h3>
+  <div class="formula">平均加權偏差 = Σ ( 維度權重 × |成品風味 − 今日理想| ) ÷ Σ 維度權重
+契合度       = clamp( 1 − 平均加權偏差 ÷ 5 , 0 , 1 )
+品質係數     = 0.6 + 0.4 × 品質分 ÷ 100          （品質 0 → ×0.6，品質 100 → ×1.0）
+標籤加減     = 每個喜歡的標籤 +8，每個討厭的標籤 −12
+最終分數     = clamp( 契合度 × 100 × 品質係數 + 標籤加減 , 0 , 100 )</div>
+  <p>最終分數對應到五個等級，每個等級決定<b>星級</b>與<b>好感變化</b>（好感夾在 0–100）：</p>
+  <div class="tblwrap"><table id="t-tiers"></table></div>
+  <p>節奏參考：完美一杯 +20，所以<b>最快 5 杯（約 3 夜）</b>能把一位角色推到 100；實際要看玩家多常拿到高分（見 <a href="#c-balance">平衡概況</a>）。</p>
+
+  <h3 id="c-feedback">8. 回饋與玩家學習</h3>
+  <p>自由搭配最怕「玩家覺得是在亂猜」。所以玩家有多個管道能學到方向，而且<b>不直接顯示分數</b>：</p>
+  <div class="tblwrap"><table>
+    <tr><th>管道</th><th>內容</th></tr>
+    <tr><td>角色卡</td><td>固定個性（愛X／怕X／♥／✕）</td></tr>
+    <tr><td>心情氣泡</td><td>今天偏移的那一個維度</td></tr>
+    <tr><td>風味預覽</td><td>調的過程中，即時看到成品的六個風味條與品質分</td></tr>
+    <tr><td>客人反應</td><td>送出後依等級說話；細節見下</td></tr>
+    <tr><td>結算卡</td><td>星級、等級、好感變化</td></tr>
+    <tr><td>企劃模式</td><td>（僅供企劃）顯示今日理想值、預測分數與計算過程</td></tr>
+  </table></div>
+  <h4>客人反應的設計（避免「精神分裂」）</h4>
+  <p>早期版本先說一句整體評價、再接一句具體挑剔，常出現「還行吧，蠻好喝的」後面接「太酸了、甜味不夠」，語氣割裂。現在的規則：</p>
+  <ul>
+    <li><b>難以下嚥</b>：客人<b>直接說出哪裡不對</b>（語氣一致，都是負面）。</li>
+    <li><b>普通／喜歡／很喜歡</b>：客人只說整體評價；具體方向改用<b>旁白的「口味建議」</b>：「若想更合○○今天的口味，也許可以試試：酸味再多一點、辣度收斂一點。」——不評判這杯酒的缺點，只給方向。</li>
+    <li><b>完美</b>：不挑剔。</li>
+    <li>命中喜歡／討厭的標籤，會另外用旁白點出來。</li>
+  </ul>
+
+  <h3 id="c-balance">9. 平衡概況（即時計算）</h3>
+  <p>下面是用<b>全部 8,820 種組合 × 前 10 夜的心情</b>，對每位客人算出的分佈，用的是目前 <code>data.js</code> 的數值。可以看出「隨機亂配」與「刻意配」的差距，以及各角色的難易度。</p>
+  <p class="prog" id="stats-prog">計算中…</p>
+  <div class="tblwrap"><table id="t-stats"></table></div>
+  <div class="callout plan"><b class="t">怎麼讀這張表</b>
+    <b>「難以下嚥」比例高</b>＝這位客人挑剔，亂配容易踩雷；<b>「完美」比例很低</b>＝要刻意配才拿得到。「最高可達」是這 10 夜裡<b>每一夜</b>的最高分中最低的那一天，如果它 ≥ 75，代表每天都至少有一款配方能拿完美，不會有「今天怎麼配都不行」的情況。<br>
+    這張表是設計時的<b>體檢工具</b>：改了材料屬性或角色理想值之後，重新整理本頁就會重新計算。</div>
+
+  <h3 id="c-knobs">10. 可調整的參數</h3>
+  <div class="tblwrap"><table>
+    <tr><th>想調什麼</th><th>在哪裡</th><th>影響</th></tr>
+    <tr><td>欄位影響力</td><td><code>data.js</code> → <code>slots[].weight</code></td><td>哪個欄位對風味影響大</td></tr>
+    <tr><td>材料風味屬性、標籤</td><td><code>data.js</code> → <code>ingredients[]</code></td><td>每種材料的味道</td></tr>
+    <tr><td>招牌配方與加成</td><td><code>data.js</code> → <code>recipes[]</code></td><td>哪些組合有名字、加幾分</td></tr>
+    <tr><td>客人理想值、重視維度、喜好標籤</td><td><code>data.js</code> → <code>npcs[]</code></td><td>每位客人的口味與難易度</td></tr>
+    <tr><td>每晚客人數、每人每晚杯數</td><td><code>data.js</code> → <code>guestsPerDay</code>、<code>giftsPerNpcPerDay</code></td><td>遊戲節奏</td></tr>
+    <tr><td>品質規則的數值</td><td><code>engine.js</code> → <code>quality()</code></td><td>「調得好不好」怎麼算</td></tr>
+    <tr><td>契合公式（偏差除數 5、品質係數 0.6/0.4）</td><td><code>engine.js</code> → <code>judge()</code></td><td>整體寬鬆／嚴格</td></tr>
+    <tr><td>等級門檻與好感變化</td><td><code>engine.js</code> → <code>TIERS</code></td><td>好感成長速度</td></tr>
+    <tr><td>心情幅度（±2）與規則</td><td><code>engine.js</code> → <code>moodOf()</code></td><td>每日隨機的強度</td></tr>
+    <tr><td>事件門檻</td><td><code>story.js</code> → <code>events[].at</code></td><td>事件解鎖時機</td></tr>
+  </table></div>
+
+  <h3 id="c-open">11. 設計取捨與待討論</h3>
+  <p>下面是做這個原型時<b>實際遇到、也還沒有定案</b>的問題。目前的做法只是「先挑一個能玩的」，不代表是最好的。</p>
+  <div class="callout plan"><b class="t">這些點如果要正式做，建議先決定</b>
+  <ol>
+    <li><b>要不要讓玩家看到分數？</b>目前只給星級與客人的話，數字只有企劃模式看得到。看到數字比較好優化，但會變成「刷分」；不看數字比較有「讀人」的感覺，但挫折感較高。</li>
+    <li><b>提示要多直白？</b>目前角色卡直接寫「愛甜、怕苦」＋心情氣泡。可以更隱晦（只在事件裡透露），也可以更直白（直接顯示偏好方向）。</li>
+    <li><b>失敗的代價？</b>目前最差只是好感 −3，並消耗一次當晚額度。若要有張力，可以加材料成本、庫存或金幣。</li>
+    <li><b>材料與配方要不要成長？</b>目前 27 種材料一開始就全開，10 款招牌配方也沒有圖鑑。常見做法是「材料逐步解禁＋配方收集」，給長期目標。</li>
+    <li><b>品質分要不要有獨立用途？</b>現在它只會讓最終分數乘上 0.6–1.0。也可以獨立變成「小費／配方熟練度／酒館評價」，讓「調得好」本身有價值，不只服務好感。</li>
+    <li><b>每日要求要不要更明確？</b>現在是「心情」這種模糊方向。可以加「點單」：客人直接說「我要一杯偏酸的」，把模糊方向變成明確目標。</li>
+    <li><b>好感成長速度</b>：完美 +20，最快 3 夜就能解完一位角色。要不要拉長、要不要有每日上限，取決於內容量與想要的遊玩時長。</li>
+    <li><b>標籤系統要擴充嗎？</b>目前標籤只有「喜歡／討厭」。也可以加「過敏／禁忌」（直接失敗）或「回憶」（觸發特殊對話）。</li>
+  </ol></div>
+
+  <h3 id="c-calc">12. 互動試算器</h3>
+  <p>這個試算器用的就是<b>遊戲裡的同一個計分引擎</b>（<code>engine.js</code>），不是另外寫的示意。選材料、選客人、選第幾夜（影響今日心情），就能看到每一步怎麼算。</p>
+  <div class="calc" id="calc">
+    <div class="row" id="calc-sel"></div>
+    <div class="row" id="calc-npc"></div>
+    <div class="out" id="calc-out"></div>
+  </div>
+</section>
+
+<!-- ============================ 客人與事件 ============================ -->
+<section id="guests">
+  <h2>客人、好感與事件</h2>
+  <ul>
+    <li><b>6 位特殊客人</b>，每位有固定個性（愛／怕、喜歡／討厭的標籤）與 5 段事件（好感 0／25／50／75／100）。</li>
+    <li><b>事件規則</b>：好感到達門檻 → 客人頭上出現「!」。<b>點客人時，有未讀事件就先播事件</b>，再進調酒。一杯酒可能一次跨過兩個門檻，事件會依序排隊。</li>
+    <li>結算時若解鎖新事件，會問「查看事件／稍後」。選稍後的話，客人頭上維持「!」。</li>
+    <li>客人頭上的泡泡：<b>「…」</b>可以互動、<b>「!」</b>有未讀事件、<b>「💤」</b>今晚喝夠了。</li>
+    <li>事件是<b>線性對話</b>（點一下進下一句），沒有分支。格式見 <a href="#data">資料結構</a>。</li>
+  </ul>
+  <div class="tblwrap"><table id="t-events"></table></div>
+  <div class="callout warn"><b class="t">文本是佔位</b>
+    目前的事件文本（共 30 段）是 AI 初稿，主要用來驗證「事件如何觸發、如何呈現」。文字都集中在 <code>story.js</code>，企劃可以直接替換，不需要動程式。</div>
+</section>
+
+<section id="bar">
+  <h2>酒吧場景</h2>
+  <ul>
+    <li><b>45 度等距（2.5D）像素場景</b>：物件用「格子座標」擺放，程式依深度自動排序，不用手動調誰擋住誰。</li>
+    <li><b>會動的酒館</b>：特殊客人固定坐在桌邊；路人會自己換位子、離席再從門口回來、在桌邊冒出閒聊泡泡；服務生端著托盤在吧台與各桌間走動；老闆在吧台後面。目的是讓客人「像是來喝酒的」，而不是靜態的選單。</li>
+    <li><b>點擊互動</b>：只有特殊客人可以點；沒有地圖移動（玩家不控制角色），降低操作成本。</li>
+    <li><b>畫面</b>：內部以 320×180 的像素格為座標，畫布依螢幕實際像素繪製，並把縮放對齊成整數倍，避免像素圖發糊。</li>
+    <li><b>素材可替換</b>：所有圖片都是「素材槽」，在 <code>story.js</code> 填路徑即可替換，沒有圖時退回程式繪製的版本。</li>
+  </ul>
+</section>
+
+<section id="dialogue">
+  <h2>對話與事件演出</h2>
+  <ul>
+    <li>RPG 風對話框：打字機效果、點擊或空白鍵進下一句、右上「SKIP」可跳過整段。</li>
+    <li>三種說話者：客人、老闆、旁白（斜體置中）。說話時另一方立繪變暗。</li>
+    <li><b>事件標題卡</b>：事件開始先顯示「角色名　事件 n / 5」與事件標題，之後立繪淡入。</li>
+    <li><b>兩種插畫背景（不必是像素風）</b>：事件對話用「沒有吧台」的酒館內部；調酒模式用「老闆視角」——下方是吧台檯面，客人立繪坐在吧台後方，身後是柔焦的酒館。</li>
+    <li>對話期間，背景音樂會自動壓低。</li>
+  </ul>
+</section>
+
+<section id="audio">
+  <h2>音訊</h2>
+  <ul>
+    <li><b>BGM</b>：〈Threshold Between Worlds〉（Suno 生成），循環播放。瀏覽器規定要先有使用者操作才能發聲，所以按下「開始遊戲」或點一下畫面才會響。</li>
+    <li><b>音效</b>：全部由程式即時合成（WebAudio），<b>沒有外部音檔</b>——點擊、材料選擇、對話打字、結算和弦（依星級）、解鎖閃光、門聲與腳步、打烊鐘聲、酒館低語與偶爾的杯子碰撞。</li>
+    <li>右上角的 🔊 可調音樂／音效音量與靜音。</li>
+  </ul>
+</section>
+
+<!-- ============================ 製作 ============================ -->
+<section id="art">
+  <h2>美術與 AI 製作流程</h2>
+  <p>這個原型從構想到可玩，是用 AI 協作完成的。下面是誰做了什麼，以及<b>哪些仍是佔位</b>。</p>
+  <div class="tblwrap"><table>
+    <tr><th>項目</th><th>做法</th><th>狀態</th></tr>
+    <tr><td>程式、系統、本說明</td><td>Claude Code（對話式開發，逐步驗證）</td><td>可玩原型</td></tr>
+    <tr><td>角色立繪（6 客人＋老闆）</td><td>Codex 生圖 → 腳本去背縮放</td><td>AI 生成，風格大致統一</td></tr>
+    <tr><td>像素小人（16 個 sprite sheet）</td><td>Codex 生圖 → 腳本切格對齊；逐一與立繪對照後重生不符者</td><td>AI 生成</td></tr>
+    <tr><td>場景（地板、牆）、家具、吧台</td><td>Codex 生成正面平視圖與等距單件，程式貼到等距座標</td><td>AI 生成</td></tr>
+    <tr><td>入口頁、調酒／事件背景</td><td>Codex 生圖（插畫風）</td><td>AI 生成</td></tr>
+    <tr><td>BGM</td><td>Suno 生成</td><td>授權依 Suno 方案，正式使用前需確認</td></tr>
+    <tr><td>音效</td><td>程式合成</td><td>無第三方授權問題</td></tr>
+    <tr><td>劇情文本、數值</td><td>AI 初稿</td><td><b>佔位，待企劃重寫／調整</b></td></tr>
+  </table></div>
+  <p><b>製作過程的一些心得</b>（對「怎麼讓 AI 幫忙做原型」有參考價值）：</p>
+  <ul>
+    <li><b>先討論再動手</b>：調酒的計分方案、事件觸發規則，都是先用文字討論定案，再實作。</li>
+    <li><b>資料與程式分離</b>：數值（<code>data.js</code>）、文本與外觀（<code>story.js</code>）、計分（<code>engine.js</code>）、畫面（其餘）分開，企劃能自己改數值與文字。</li>
+    <li><b>AI 生圖要逐張檢查</b>：像素小人的表情、鬍鬚、膚色曾與立繪不一致，是人眼對照後才發現並重生的。</li>
+    <li><b>用程式驗證，不憑感覺</b>：分數平衡用全部組合窮舉、心情規則用 360 筆抽查、音效用離線渲染檢查是否爆音。</li>
+  </ul>
+</section>
+
+<section id="data">
+  <h2>資料結構與修改方式</h2>
+  <div class="tblwrap"><table>
+    <tr><th>檔案</th><th>內容</th><th>誰會改</th></tr>
+    <tr><td><code>data.js</code></td><td>材料、配方、客人的理想值與喜好、每晚節奏</td><td>企劃</td></tr>
+    <tr><td><code>story.js</code></td><td>角色外觀與名稱、事件與序章文本、素材路徑</td><td>企劃／美術</td></tr>
+    <tr><td><code>engine.js</code></td><td>計分引擎（風味、品質、契合、心情、反應對話）</td><td>程式</td></tr>
+    <tr><td><code>game.js</code>、<code>barscene.js</code>、<code>audio.js</code></td><td>流程、場景、音訊</td><td>程式</td></tr>
+    <tr><td><code>docs/</code></td><td>本說明（表格與試算器直接讀上面的資料檔）</td><td>—</td></tr>
+    <tr><td><code>ASSETS.md</code>、<code>audio/README.md</code></td><td>素材規格與音訊說明</td><td>美術／音訊</td></tr>
+  </table></div>
+  <h4>範例：事件的格式</h4>
+  <div class="formula">{ at: 25, title: '寫不完的名字', script: [
+    { w: 'npc', t: '……' },   // 客人說話
+    { w: 'me',  t: '……' },   // 老闆說話
+    { w: 'sys', t: '……' },   // 旁白
+] }</div>
+  <h4>怎麼新增一位客人</h4>
+  <ol>
+    <li><code>data.js</code>：在 <code>npcs</code> 加一筆（id、理想風味、維度權重、喜歡／討厭標籤、反應台詞）。</li>
+    <li><code>story.js</code>：在 <code>npcs</code> 用同一個 id 補名稱、職業、外觀（沒有圖時會用程式畫的簡易人形）與 5 段事件。</li>
+    <li>有圖時，把立繪與像素小人路徑填進 <code>assets.portrait</code>、<code>assets.sprites</code>（規格見 <code>ASSETS.md</code>）。</li>
+  </ol>
+  <p>就這樣，酒吧、輪替、調酒、好感、事件都會自動納入，不用改程式。</p>
+</section>
+
+<section id="limits">
+  <h2>已知限制與後續</h2>
+  <ul>
+    <li><b>數值未經玩家測試</b>：目前是設計師視角的初版，平衡概況只能說明「結構上沒有明顯壞掉」，不代表好玩。</li>
+    <li><b>文本是 AI 初稿</b>，AI 感重，需要企劃重寫。</li>
+    <li><b>只做橫式、滑鼠操作</b>，沒有針對觸控與直式手遊版面調整。</li>
+    <li><b>調酒成品沒有圖像</b>（只有名稱與表情符號），招牌配方沒有圖鑑，也沒有材料解鎖。</li>
+    <li>像素角色與插畫風立繪是兩種風格，目前是有意搭配（場景用像素、對話用插畫），正式版需要美術統一方向。</li>
+    <li>BGM 的授權需在正式使用前確認。</li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<script src="../data.js"></script>
+<script src="../story.js"></script>
+<script src="../engine.js"></script>
+<script src="design.js"></script>
+</body>
+</html>
