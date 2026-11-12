@@ -30,6 +30,7 @@
     let s = Math.min(innerWidth / 1280, innerHeight / 720);
     const snapped = Math.floor(s * q) / q; if (snapped >= 0.5 / dpr) s = snapped;
     stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+    window.__stageScale = s; window.dispatchEvent(new Event('stagefit'));   // 通知酒吧畫布依實際螢幕像素重繪
   }
   addEventListener('resize', fit); fit();
 

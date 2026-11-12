@@ -171,7 +171,7 @@ const BarScene = (function () {
     const im = p.id && sheetFor(p.id);
     if (im) {
       const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : fr, row = dir === 1 ? 0 : 1;
-      // sprite sheet 每格 = 圖寬/8 x 圖高/2（建議 128x160，高解析）；整格對應到 32x40 個場景像素，腳底基準線在格內 95%
+      // sprite sheet 每格 = 圖寬/8 x 圖高/2（建議 192x240，高解析）；整格對應到 32x40 個場景像素，腳底基準線在格內 95%
       const fw = im.width / 8, fh = im.height / 2;
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
       g.drawImage(im, col * fw, row * fh, fw, fh, x - SW / 2, y - 38, SW, SH);
@@ -387,10 +387,18 @@ const BarScene = (function () {
   // ---------- 掛載 ----------
   function mount(root, opts) {
     root.innerHTML = '';
-    const cv = document.createElement('canvas'); cv.width = W * PS; cv.height = H * PS; cv.className = 'isocv'; root.appendChild(cv);   // 高解析畫布，座標仍用 320x180 的像素格
+    const cv = document.createElement('canvas'); cv.className = 'isocv'; root.appendChild(cv);
     const layer = document.createElement('div'); layer.className = 'ents'; root.appendChild(layer);
     const pill = document.createElement('div'); pill.className = 'pill'; pill.textContent = '點擊頭上有泡泡的客人　「!」＝有新事件'; root.appendChild(pill);
-    const g = cv.getContext('2d'); g.setTransform(PS, 0, 0, PS, 0, 0); g.imageSmoothingEnabled = false;
+    const g = cv.getContext('2d');
+    // 畫布大小 = 螢幕實際像素（舞台縮放 x 裝置像素比），這樣瀏覽器不會再二次縮放；
+    // 每個場景像素 = K 個螢幕像素（視窗縮放已對齊成整數）
+    function sizeCanvas() {
+      const dpr = window.devicePixelRatio || 1, s = window.__stageScale || 1;
+      cv.width = Math.round(1280 * s * dpr); cv.height = Math.round(720 * s * dpr);
+      const K = cv.width / W; g.setTransform(K, 0, 0, K, 0, 0); g.imageSmoothingEnabled = false;
+    }
+    sizeCanvas(); window.addEventListener('stagefit', sizeCanvas);
     const w = create(root, opts);
     let alive = true, last = performance.now(), raf;
 
@@ -438,7 +446,7 @@ const BarScene = (function () {
       w.update(dt, now); render(now); raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    return { destroy() { alive = false; cancelAnimationFrame(raf); root.innerHTML = ''; } };
+    return { destroy() { alive = false; cancelAnimationFrame(raf); window.removeEventListener('stagefit', sizeCanvas); root.innerHTML = ''; } };
   }
 
   return { mount };

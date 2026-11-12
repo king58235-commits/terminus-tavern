@@ -241,3 +241,13 @@ const STORY = {
 
 // 合併進 GAME_DATA.npcs（以 id 對應）
 GAME_DATA.npcs.forEach(n => Object.assign(n, STORY.npcs[n.id]));
+
+// 素材版本號：換圖後請把這個字串改掉（例如改成日期），瀏覽器就會重新下載，不會用到舊快取。
+// （用程式載入的圖片，Ctrl+F5 不一定會重新抓，所以所有素材路徑都自動加上 ?v=版本）
+STORY.version = '20251113c';
+(function bust(o) {
+  for (const k in o) {
+    if (typeof o[k] === 'string') o[k] += '?v=' + STORY.version;
+    else if (o[k] && typeof o[k] === 'object') bust(o[k]);
+  }
+})(STORY.assets);
