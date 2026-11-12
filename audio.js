@@ -7,7 +7,7 @@
 const Sound = (function () {
   'use strict';
   const KEY = 'km_audio_v1';
-  const st = { bgm: 0.5, sfx: 0.8, muted: false };
+  const st = { bgm: 0.3, sfx: 0.9, muted: false };   // BGM 母帶很響（RMS 約 0.18），預設音量要比音效低
   try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -43,20 +43,20 @@ const Sound = (function () {
     }
 
     const S = {
-      click(t) { tone(t, 1500, 0.05, { slide: 900, vol: 0.07 }); noise(t, 0.02, { type: 'highpass', f: 4000, vol: 0.04 }); return 0.1; },
+      click(t) { tone(t, 1500, 0.05, { slide: 900, vol: 0.11 }); noise(t, 0.02, { type: 'highpass', f: 4000, vol: 0.06 }); return 0.1; },
       select(t) { tone(t, 520, 0.09, { slide: 260, vol: 0.11 }); noise(t, 0.035, { f: 1800, Q: 2, vol: 0.05 }); return 0.15; },
-      blip(t, f) { tone(t, f || 620, 0.035, { type: 'triangle', vol: 0.03 }); return 0.05; },
-      next(t) { tone(t, 880, 0.06, { type: 'triangle', vol: 0.05 }); return 0.1; },
+      blip(t, f) { tone(t, f || 620, 0.035, { type: 'triangle', vol: 0.055 }); return 0.05; },
+      next(t) { tone(t, 880, 0.06, { type: 'triangle', vol: 0.08 }); return 0.1; },
       knock(t) { for (let i = 0; i < 2; i++) { tone(t + i * 0.13, 230, 0.09, { slide: 150, vol: 0.2 }); noise(t + i * 0.13, 0.04, { f: 700, Q: 1.5, vol: 0.08 }); } return 0.4; },
-      whoosh(t, dur) { dur = dur || 0.55; noise(t, dur, { f: 300, f2: 1800, Q: 0.7, vol: 0.09, a: dur * 0.4 }); return dur; },
+      whoosh(t, dur) { dur = dur || 0.55; noise(t, dur, { f: 300, f2: 1800, Q: 0.7, vol: 0.13, a: dur * 0.4 }); return dur; },
       thump(t, f) { tone(t, f || 90, 0.2, { slide: 45, vol: 0.28 }); noise(t, 0.07, { type: 'lowpass', f: 320, vol: 0.12 }); return 0.25; },
       creak(t, dur) {
         dur = dur || 1; const o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain(), bp = ctx.createBiquadFilter();
         o.type = 'sawtooth'; o.frequency.setValueAtTime(120, t); o.frequency.linearRampToValueAtTime(185, t + dur);
         lfo.frequency.value = 9; lg.gain.value = 9; lfo.connect(lg); lg.connect(o.frequency);
-        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 4; sustain(g, t, 0.08, 0.055, dur, 0.25);
+        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 4; sustain(g, t, 0.08, 0.1, dur, 0.25);
         o.connect(bp); bp.connect(g); wire(g, 0.15); o.start(t); lfo.start(t); o.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05);
-        noise(t, dur, { f: 1500, Q: 3, vol: 0.018, a: 0.1, rel: 0.2 }); return dur;
+        noise(t, dur, { f: 1500, Q: 3, vol: 0.03, a: 0.1, rel: 0.2 }); return dur;
       },
       doorOpen(t) { S.creak(t, 0.9); S.thump(t + 0.9, 110); for (let i = 0; i < 3; i++) noise(t + 0.95 + i * 0.09, 0.07, { f: 1200 + i * 200, Q: 2, vol: 0.1 }); return 1.4; },
       footsteps(t, n) { n = n || 4; for (let i = 0; i < n; i++) { tone(t + i * 0.3, 85 + rnd(-8, 8), 0.12, { slide: 55, vol: 0.12 }); noise(t + i * 0.3, 0.05, { type: 'lowpass', f: 500, vol: 0.05 }); } return n * 0.3; },
@@ -71,7 +71,7 @@ const Sound = (function () {
       },
       ice(t) { for (let i = 0; i < 3; i++) { const f = rnd(2300, 3400); tone(t + i * 0.08, f, 0.22, { vol: 0.06 }); tone(t + i * 0.08, f * 1.5, 0.12, { vol: 0.03 }); } return 0.4; },
       clink(t, v) { v = v || 1; tone(t, 2637, 0.55, { vol: 0.12 * v, wet: 0.3 }); tone(t, 3951, 0.35, { vol: 0.07 * v }); tone(t, 5300, 0.18, { vol: 0.03 * v }); noise(t, 0.015, { type: 'highpass', f: 5000, vol: 0.05 * v }); return 0.6; },
-      slide(t) { noise(t, 0.35, { type: 'lowpass', f: 900, f2: 350, Q: 0.7, vol: 0.09, a: 0.08 }); return 0.4; },
+      slide(t) { noise(t, 0.35, { type: 'lowpass', f: 900, f2: 350, Q: 0.7, vol: 0.13, a: 0.08 }); return 0.4; },
       mix(t) { S.shake(t, 0.9); S.pour(t + 1.0, 0.9); S.ice(t + 1.75); S.clink(t + 2.05); S.slide(t + 2.3); return 2.7; },
       result(t, stars, gain) {
         if (gain < 0) { tone(t, 190, 0.6, { type: 'triangle', slide: 70, vol: 0.2 }); noise(t, 0.3, { type: 'lowpass', f: 300, vol: 0.1 }); return 0.7; }
@@ -108,7 +108,7 @@ const Sound = (function () {
   function bgmVol() { return st.muted ? 0 : Math.min(1, st.bgm * duckF); }
   function applyVol() { if (master) master.gain.value = st.muted ? 0 : st.sfx; if (bgm) bgm.volume = bgmVol(); }
   function bgmStart() {
-    bgmWanted = true; const src = (window.STORY && STORY.audio && STORY.audio.bgm); if (!src) return;
+    bgmWanted = true; const src = (typeof STORY !== 'undefined' && STORY.audio && STORY.audio.bgm); if (!src) return;   // 注意：STORY 是 const，不在 window 上
     if (!bgm) { bgm = new Audio(src); bgm.loop = true; bgm.preload = 'auto'; }
     bgm.volume = bgmVol(); const p = bgm.play(); if (p && p.catch) p.catch(() => {});
   }
@@ -177,5 +177,7 @@ const Sound = (function () {
     result: (stars, gain) => play('result', stars, gain),
     mixSequence() { const d = play('mix'); return new Promise(r => setTimeout(r, Math.max(d, 0.6) * 1000)); },
     get muted() { return st.muted; },
+    // 除錯用：回報 BGM 的實際狀態（是否在播、音量、讀取狀態、錯誤）
+    status() { return { wanted: bgmWanted, has: !!bgm, paused: bgm ? bgm.paused : null, volume: bgm ? +bgm.volume.toFixed(2) : null, time: bgm ? +bgm.currentTime.toFixed(1) : null, ready: bgm ? bgm.readyState : null, error: bgm && bgm.error ? bgm.error.code : null, src: bgm ? bgm.currentSrc.split('/').slice(-2).join('/') : null, ctx: ctx ? ctx.state : null, st: Object.assign({}, st), duck: +duckF.toFixed(2) }; },
   };
 })();
