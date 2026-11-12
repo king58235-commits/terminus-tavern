@@ -83,10 +83,12 @@
     const box = $('.dbox', dlg), skip = $('.dskip', dlg);
     skip.onclick = e => { e.stopPropagation(); skipAll = true; if (curAdvance) { curAdvance(); if (curAdvance) curAdvance(); } };
     if (ctx.title) {
+      dlg.classList.add('titling');                       // 標題出現時先藏起立繪，避免蓋住標題文字
       box.style.visibility = 'hidden'; skip.style.visibility = 'hidden';
       const t = $('.dtitle', dlg); t.innerHTML = `<small>${ctx.sub || ''}</small><h2>${ctx.title}</h2>`;
       await sleep(150); t.classList.add('on'); await sleep(1800); t.classList.remove('on'); await sleep(500);
       box.style.visibility = ''; skip.style.visibility = '';
+      dlg.classList.remove('titling');
     }
     for (const line of lines) { if (skipAll) break; await speak(line, n); }
     dlg.className = ''; dlg.innerHTML = ''; curAdvance = null;

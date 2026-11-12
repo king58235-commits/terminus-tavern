@@ -274,3 +274,9 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 #title.opening .doorway .door.l{transform:rotateY(78deg)}
 #title.opening .doorway .door.r{transform:rotateY(-78deg)}
 #title .tw.art #startBtn{top:auto;bottom:22px;background:rgba(10,8,18,.7)}
+
+/* 事件標題：永遠在立繪之上；顯示標題時立繪先隱藏，之後淡入 */
+.dtitle{z-index:8}
+.dtitle h2{text-shadow:0 0 22px #e8b45c,0 2px 10px #000}
+#dlg.titling .dfig{opacity:0}
+.dfig{transition:opacity .7s,filter .25s}
