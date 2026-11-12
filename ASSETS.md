@@ -52,6 +52,12 @@
 
 工具：[tools/slice_props.py](tools/slice_props.py) 把家具組切成單件。
 
+## 4. 與立繪一起出現的背景（不必是像素風）
+| 素材 | 檔案 | 用在哪 |
+|---|---|---|
+| 調酒模式背景 | `backgrounds/mix_bg.jpg` | 老闆視角：下方是吧台檯面，客人立繪坐在吧台後方（立繪下緣在檯面遠端邊緣約 68% 高度被遮住），身後是柔焦的酒館 |
+| 事件對話背景 | `backgrounds/event_bg.jpg` | 酒館內部插畫，沒有吧台；左右各放一位立繪，下方是對話框 |
+
 ## 生圖提示詞方向（給 Codex）
 1. 先生**一張角色設定圖**（正面、背面、色票），再依它生各方向的小人，風格才一致。
 2. 提示詞關鍵字：`pixel art, isometric, chibi, 192x240 sprite, limited palette, hard edges, transparent background`。

@@ -81,6 +81,9 @@
       : `<div class="dfig center">${Art.keeper()}</div>`);
     dlg.innerHTML = `<div class="dbg"></div>${figs}<div class="dtitle"></div><div class="dbox"><div class="dname"></div><div class="dtext"></div><div class="darrow">▼</div></div><button class="dskip">SKIP ▶▶</button>`;
     const box = $('.dbox', dlg), skip = $('.dskip', dlg);
+    if (ctx.mode === 'dark' && S.assets.event_bg) {      // 事件對話：酒館插畫（沒有吧台）加一層暗色，讓立繪與文字清楚
+      $('.dbg', dlg).style.background = `linear-gradient(rgba(8,5,12,.28),rgba(8,5,12,.5)), url(${S.assets.event_bg}) center/cover`;
+    }
     skip.onclick = e => { e.stopPropagation(); skipAll = true; if (curAdvance) { curAdvance(); if (curAdvance) curAdvance(); } };
     if (ctx.title) {
       dlg.classList.add('titling');                       // 標題出現時先藏起立繪，避免蓋住標題文字

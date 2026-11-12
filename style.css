@@ -257,9 +257,9 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 .dfig.center:has(.figimg){left:480px;bottom:-250px}
 .dfig .figimg{height:900px}
 .dfig.dim .figimg{filter:brightness(.5)}
-/* 調酒模式：半身立繪（腰部以上），下緣淡出，被調酒預覽卡接住 */
-.guestfig:has(.figimg){top:118px !important;width:560px;height:412px;overflow:hidden;transform:translateX(-50%) !important;display:flex;justify-content:center;
-  -webkit-mask-image:linear-gradient(#000 82%,transparent);mask-image:linear-gradient(#000 82%,transparent)}
+/* 調酒模式：半身立繪；下緣在吧台檯面遠端邊緣（背景圖約 68% 高度）直接被遮住，看起來坐在吧台後面 */
+#mix.has-img .mwall,#mix.has-img .mcounter{display:none}
+.guestfig:has(.figimg){top:118px !important;width:560px;height:376px;overflow:hidden;transform:translateX(-50%) !important;display:flex;justify-content:center}
 .guestfig .figimg{height:760px;flex:none}
 
 /* ===== 入口頁（正式美術版） ===== */

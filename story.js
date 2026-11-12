@@ -13,7 +13,8 @@ const STORY = {
     door_l: 'backgrounds/door_l.png',     // 左門板
     door_r: 'backgrounds/door_r.png',     // 右門板
     bar_bg: null,     // 酒吧背景（1280x720）
-    mix_bg: null,     // 調酒模式背景（1280x720）
+    event_bg: 'backgrounds/event_bg.jpg',   // 事件對話背景：酒館內部插畫（沒有吧台）
+    mix_bg: 'backgrounds/mix_bg.jpg',     // 調酒模式背景：老闆視角，吧台檯面在下、客人身後是柔焦的酒館（不必是像素風）
     keeper: 'portraits/keeper.png',     // 老闆立繪
     portrait: {       // 各客人立繪（約 400x720，透明背景）
       rena: 'portraits/rena.png', kael: 'portraits/kael.png', mira: 'portraits/mira.png',
@@ -265,7 +266,7 @@ GAME_DATA.npcs.forEach(n => Object.assign(n, STORY.npcs[n.id]));
 
 // 素材版本號：換圖後請把這個字串改掉（例如改成日期），瀏覽器就會重新下載，不會用到舊快取。
 // （用程式載入的圖片，Ctrl+F5 不一定會重新抓，所以所有素材路徑都自動加上 ?v=版本）
-STORY.version = '20251113f';
+STORY.version = '20251113h';
 (function bust(o) {
   for (const k in o) {
     if (typeof o[k] === 'string') o[k] += '?v=' + STORY.version;
