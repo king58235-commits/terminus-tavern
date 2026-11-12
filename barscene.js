@@ -171,7 +171,11 @@ const BarScene = (function () {
     const im = p.id && sheetFor(p.id);
     if (im) {
       const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : fr, row = dir === 1 ? 0 : 1;
-      g.drawImage(im, col * SW, row * SH, SW, SH, x - SW / 2, y - 38, SW, SH); return;   // 腳底基準線在格內 y=38
+      // sprite sheet 每格 = 圖寬/8 x 圖高/2（建議 128x160，高解析）；整格對應到 32x40 個場景像素，腳底基準線在格內 95%
+      const fw = im.width / 8, fh = im.height / 2;
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(im, col * fw, row * fh, fw, fh, x - SW / 2, y - 38, SW, SH);
+      g.imageSmoothingEnabled = false; return;
     }
     let by = y; if (sit) by = y - 1;
     if (L.ghost) by = y - 4 + (Math.floor(t / 450) & 1);
@@ -189,7 +193,7 @@ const BarScene = (function () {
     }
     // 身體
     g.fillStyle = cloth; g.fillRect(x - 3, by - 13, 6, 1); g.fillRect(x - 4, by - 12, 8, 8);
-    if (L.ghost) { g.clearRect(x - 4, by - 5, 1, 1); g.clearRect(x - 1, by - 5, 1, 1); g.clearRect(x + 2, by - 5, 1, 1); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x - 4, by - 12, 8, 1); }
+    if (L.ghost) { g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x - 4, by - 12, 8, 1); }
     if (L.style === 'keeper') {
       g.fillStyle = '#efe9de'; g.fillRect(x - 2, by - 12, 4, 7); g.fillStyle = L.acc; g.fillRect(x - 1, by - 12, 2, 1);
     } else { g.fillStyle = L.acc; g.fillRect(x - 1 + (dir > 0 ? 1 : -1) * 0, by - 11, 2, 1); }
@@ -383,10 +387,10 @@ const BarScene = (function () {
   // ---------- 掛載 ----------
   function mount(root, opts) {
     root.innerHTML = '';
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.className = 'isocv'; root.appendChild(cv);
+    const cv = document.createElement('canvas'); cv.width = W * PS; cv.height = H * PS; cv.className = 'isocv'; root.appendChild(cv);   // 高解析畫布，座標仍用 320x180 的像素格
     const layer = document.createElement('div'); layer.className = 'ents'; root.appendChild(layer);
     const pill = document.createElement('div'); pill.className = 'pill'; pill.textContent = '點擊頭上有泡泡的客人　「!」＝有新事件'; root.appendChild(pill);
-    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    const g = cv.getContext('2d'); g.setTransform(PS, 0, 0, PS, 0, 0); g.imageSmoothingEnabled = false;
     const w = create(root, opts);
     let alive = true, last = performance.now(), raf;
 

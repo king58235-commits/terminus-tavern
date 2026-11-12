@@ -24,7 +24,13 @@
 
   // ---------- 舞台縮放 ----------
   const stage = $('#stage');
-  function fit() { const s = Math.min(innerWidth / 1280, innerHeight / 720); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+  // 縮放對齊「整數個裝置像素」：像素美術才不會因為放大倍率不整齊而發糊
+  function fit() {
+    const dpr = window.devicePixelRatio || 1, q = 4 * dpr;           // 場景 1 個像素 = 4 個舞台像素
+    let s = Math.min(innerWidth / 1280, innerHeight / 720);
+    const snapped = Math.floor(s * q) / q; if (snapped >= 0.5 / dpr) s = snapped;
+    stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+  }
   addEventListener('resize', fit); fit();
 
   // ---------- 通用 ----------
