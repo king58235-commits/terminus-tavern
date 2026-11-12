@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>酒館系統 Prototype</title>
+<style>
+  :root{
+    --bg:#16120f; --panel:#221b16; --panel2:#2c231c; --line:#41342a;
+    --text:#f1e6d8; --mute:#a8978a; --gold:#e8b45c; --good:#7fc48a; --bad:#e0765f; --accent:#c9803c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:#1d1612}
+  header h1{font-size:18px;margin:0;color:var(--gold)}
+  header .sp{flex:1}
+  button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#1a1008;font-weight:700}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  label.chk{display:flex;align-items:center;gap:6px;color:var(--mute);cursor:pointer}
+  main{display:grid;grid-template-columns:300px 1fr 340px;gap:14px;padding:14px;max-width:1400px;margin:0 auto}
+  @media(max-width:1100px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .panel h2{font-size:14px;margin:0 0 10px;color:var(--gold);letter-spacing:.05em}
+  /* guests */
+  .guest{border:2px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;cursor:pointer;background:var(--panel2)}
+  .guest.sel{border-color:var(--gold);box-shadow:0 0 0 2px #e8b45c33}
+  .guest .top{display:flex;gap:10px;align-items:center}
+  .avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:24px;flex:none}
+  .guest .nm{font-weight:700}.guest .ti{color:var(--mute);font-size:12px}
+  .mood{font-size:12px;color:var(--gold);margin:6px 0 2px}
+  .tags{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+  .tag{font-size:11px;padding:1px 7px;border-radius:99px;background:#00000040;border:1px solid var(--line);color:var(--mute)}
+  .tag.like{color:var(--good);border-color:#7fc48a55}.tag.hate{color:var(--bad);border-color:#e0765f55}
+  .bar{height:8px;background:#00000050;border-radius:99px;overflow:hidden;margin-top:6px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#c9803c,#e8b45c)}
+  .aff{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:4px}
+  .ev{font-size:12px;color:var(--mute)}.ev.on{color:var(--good)}
+  .gifts{font-size:12px;color:var(--mute)}
+  /* station */
+  .slot{margin-bottom:12px}
+  .slot .lb{font-size:12px;color:var(--mute);margin-bottom:5px}
+  .slot .lb b{color:var(--text)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:5px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;user-select:none}
+  .chip:hover{border-color:var(--accent)}
+  .chip.on{background:#c9803c33;border-color:var(--gold);color:var(--gold)}
+  /* result */
+  .drink{text-align:center;padding:6px 0 10px}
+  .drink .glass{font-size:44px}
+  .drink .name{font-size:20px;font-weight:700;color:var(--gold)}
+  .badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:#e8b45c22;color:var(--gold);border:1px solid #e8b45c66;margin-top:4px}
+  .frow{display:grid;grid-template-columns:62px 1fr 34px;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+  .track{position:relative;height:12px;background:#00000050;border-radius:99px}
+  .track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#8a5a2b,#e8b45c)}
+  .track .mk{position:absolute;top:-3px;bottom:-3px;width:3px;background:#7fc4e8;border-radius:2px;box-shadow:0 0 4px #7fc4e8}
+  .qbox{display:flex;align-items:center;gap:10px;margin:10px 0 4px}
+  .qnum{font-size:26px;font-weight:700;color:var(--gold)}
+  .detail{font-size:12px;color:var(--mute);border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
+  .detail div{display:flex;justify-content:space-between}
+  .neg{color:var(--bad)}.pos{color:var(--good)}
+  /* feedback */
+  .fb{min-height:60px}
+  .stars{font-size:22px;letter-spacing:3px;color:var(--gold)}
+  .say{background:var(--panel2);border-left:3px solid var(--gold);padding:8px 10px;margin:8px 0;border-radius:0 8px 8px 0}
+  .unlock{background:#7fc48a22;border:1px solid #7fc48a77;color:var(--good);padding:6px 10px;border-radius:8px;margin-top:6px}
+  .empty{color:var(--mute);text-align:center;padding:24px 0}
+  .log div{font-size:12px;color:var(--mute);padding:3px 0;border-bottom:1px solid #ffffff0d}
+  .planner{display:none}.pm .planner{display:block}
+  .note{font-size:12px;color:var(--mute);margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍸 酒館系統 Prototype</h1>
+  <span id="day">第 1 天</span>
+  <span class="sp"></span>
+  <label class="chk"><input type="checkbox" id="pm"> 企劃模式（顯示計算細節）</label>
+  <button id="next">下一天 ▶</button>
+  <button id="reset">重置存檔</button>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>今日客人</h2>
+    <div id="guests"></div>
+    <div class="note">每天用日期當種子輪替客人與「今日心情」（心情會讓理想風味某一項 ±2）。</div>
+  </section>
+
+  <section class="panel">
+    <h2>調酒台</h2>
+    <div id="station"></div>
+    <button id="clear">清空</button>
+  </section>
+
+  <section>
+    <div class="panel" style="margin-bottom:14px">
+      <h2>成品預覽</h2>
+      <div id="preview"></div>
+    </div>
+    <div class="panel">
+      <h2>送酒</h2>
+      <button class="primary" id="serve" style="width:100%">請先選客人與基酒</button>
+      <div class="fb" id="feedback"></div>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script>
+(function(){
+  const E = Engine, D = E.D;
+  const KEY = 'km_cocktail_proto_v1';
+  const $ = id => document.getElementById(id);
+  const fresh = () => ({ day:1, affinity:{}, gifts:{}, log:[] });
+  let state; try { state = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch(e){ state = fresh(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} };
+
+  let sel = {};           // 目前選的材料
+  let guest = null;       // 目前選的客人
+  let lastResult = null;  // 最後一次送酒的結果
+
+  const aff = n => state.affinity[n.id] || 0;
+  const giftsLeft = n => D.giftsPerNpcPerDay - (state.gifts[state.day + ':' + n.id] || 0);
+
+  function renderGuests(){
+    const list = E.guestsOfDay(state.day);
+    if (!guest || !list.includes(guest)) guest = list[0];
+    $('day').textContent = '第 ' + state.day + ' 天';
+    $('guests').innerHTML = list.map(n => {
+      const m = E.moodOf(n, state.day), a = aff(n);
+      const evs = n.events.map(e => `<div class="ev ${a>=e.at?'on':''}">${a>=e.at?'✅':'🔒'} 好感 ${e.at}：${a>=e.at?e.title:'？？？'}</div>`).join('');
+      const hints = E.hintsOf(n).map(h=>`<span class="tag">${h}</span>`).join('');
+      const like = n.like.map(t=>`<span class="tag like">♥ ${t}</span>`).join('');
+      const hate = n.hate.map(t=>`<span class="tag hate">✕ ${t}</span>`).join('');
+      const ideal = E.idealToday(n, state.day);
+      const pl = `<div class="planner note">理想（今日）：${D.dims.map(d=>d.name+ideal[d.id]).join(' ')}</div>`;
+      return `<div class="guest ${n===guest?'sel':''}" data-id="${n.id}">
+        <div class="top"><div class="avatar" style="background:${n.color}33;border:2px solid ${n.color}">${n.emoji}</div>
+          <div><div class="nm">${n.name}</div><div class="ti">${n.title}</div></div></div>
+        <div class="mood">💭 ${m.text}</div>
+        <div class="tags">${hints}${like}${hate}</div>
+        <div class="bar"><i style="width:${a}%"></i></div>
+        <div class="aff"><span>好感 ${a} / 100</span><span class="gifts">今日剩 ${giftsLeft(n)} 杯</span></div>
+        ${evs}${pl}</div>`;
+    }).join('');
+    document.querySelectorAll('.guest').forEach(el => el.onclick = () => {
+      guest = D.npcs.find(n => n.id === el.dataset.id); lastResult = null; renderAll();
+    });
+  }
+
+  function renderStation(){
+    $('station').innerHTML = D.slots.map(s => {
+      const opts = D.ingredients.filter(i => i.slot === s.id);
+      const chips = (s.required ? [] : [{id:null,name:'無',emoji:'∅'}]).concat(opts).map(i => {
+        const on = (sel[s.id] || null) === i.id;
+        return `<div class="chip ${on?'on':''}" data-slot="${s.id}" data-id="${i.id||''}">${i.emoji} ${i.name}</div>`;
+      }).join('');
+      return `<div class="slot"><div class="lb"><b>${s.name}</b>${s.required?'（必選）':''}　影響力 ×${s.weight}</div><div class="chips">${chips}</div></div>`;
+    }).join('');
+    document.querySelectorAll('.chip').forEach(el => el.onclick = () => {
+      sel[el.dataset.slot] = el.dataset.id || null; lastResult = null; renderAll();
+    });
+  }
+
+  function bars(f, ideal){
+    return D.dims.map(d => `<div class="frow"><span>${d.icon} ${d.name}</span>
+      <div class="track"><div class="fill" style="width:${f[d.id]*10}%"></div>${ideal?`<div class="mk" style="left:calc(${ideal[d.id]*10}% - 1px)"></div>`:''}</div>
+      <span>${f[d.id]}</span></div>`).join('');
+  }
+
+  function renderPreview(){
+    if (!sel.base) { $('preview').innerHTML = '<div class="empty">先選一種基酒開始調製</div>'; return; }
+    const f = E.flavor(sel), q = E.quality(sel, f);
+    const name = E.cocktailName(sel, f, q.recipe);
+    const pm = $('pm').checked;
+    const ideal = pm && guest ? E.idealToday(guest, state.day) : null;
+    const j = pm && guest ? E.judge(sel, guest, state.day) : null;
+    const det = q.items.map(i => `<div><span>${i.text}</span><span class="${i.delta<0?'neg':'pos'}">${i.delta>0?'+':''}${i.delta}</span></div>`).join('');
+    const jd = j ? `<div class="detail planner" style="display:block"><b>對 ${guest.name} 的契合計算</b>
+      <div><span>平均加權偏差</span><span>${j.avg}</span></div>
+      <div><span>契合度 = 1 − 偏差/5</span><span>${j.fit}%</span></div>
+      <div><span>品質係數 = 0.6 + 0.4×品質</span><span>×${j.qFactor}</span></div>
+      <div><span>標籤加減（♥${j.likeHit.join('、')||'—'} ✕${j.hateHit.join('、')||'—'}）</span><span class="${j.tagAdj<0?'neg':'pos'}">${j.tagAdj>0?'+':''}${j.tagAdj}</span></div>
+      <div><span>最終分數</span><span><b>${j.final}</b>（${j.tier.label}）</span></div></div>` : '';
+    $('preview').innerHTML = `<div class="drink"><div class="glass">🍸</div><div class="name">${name}</div>
+      ${q.recipe?'<div class="badge">★ 招牌配方</div>':''}</div>
+      ${bars(f, ideal)}
+      ${pm&&guest?'<div class="note">藍色標記 = '+guest.name+' 今日理想值</div>':''}
+      <div class="qbox"><span class="qnum">${q.score}</span><span>品質分<br><span class="note" style="margin:0">與客人無關，看調得好不好</span></span></div>
+      <div class="detail ${pm?'':'planner'}" style="${pm?'display:block':''}">${det}</div>${jd}`;
+  }
+
+  function renderServe(){
+    const b = $('serve');
+    if (!guest) { b.disabled = true; b.textContent = '請先選客人'; return; }
+    if (!sel.base) { b.disabled = true; b.textContent = '請先選基酒'; return; }
+    if (giftsLeft(guest) <= 0) { b.disabled = true; b.textContent = guest.name + ' 今天喝夠了'; return; }
+    b.disabled = false; b.textContent = '🍸 送給 ' + guest.name;
+    renderFeedback();
+  }
+
+  function renderFeedback(){
+    const fb = $('feedback');
+    if (!lastResult) { fb.innerHTML = '<div class="empty">還沒送酒</div>'; return; }
+    const r = lastResult;
+    fb.innerHTML = `<div style="text-align:center"><div class="stars">${'★'.repeat(r.tier.stars)}${'☆'.repeat(4-r.tier.stars)}</div>
+      <b>${r.name}</b>　${r.tier.label}　<span class="note">（${r.final} 分）</span></div>
+      <div class="say">${r.npc.emoji} 「${r.line}」${r.hints.length?`<br><span class="neg">　${r.hints.join('、')}</span>`:''}
+        ${r.likeHit.length?`<br><span class="pos">　喜歡這個：${r.likeHit.join('、')}</span>`:''}
+        ${r.hateHit.length?`<br><span class="neg">　不喜歡這個：${r.hateHit.join('、')}</span>`:''}</div>
+      <div>好感 ${r.gain>=0?'+':''}${r.gain}　（${r.from} → ${r.to}）</div>
+      ${r.unlocked.map(t=>`<div class="unlock">🎉 解鎖角色事件：${t}</div>`).join('')}`;
+  }
+
+  function renderLog(){
+    $('log').innerHTML = state.log.length ? '<h2 style="margin-top:14px">送酒紀錄</h2>' + state.log.slice(0,8).map(l=>`<div>D${l.day} ${l.npc} ← ${l.name}｜${l.final}分｜好感${l.gain>=0?'+':''}${l.gain}</div>`).join('') : '';
+  }
+
+  function serve(){
+    if (!guest || !sel.base || giftsLeft(guest) <= 0) return;
+    const j = E.judge(sel, guest, state.day);
+    const name = E.cocktailName(sel, j.f, j.q.recipe);
+    const from = aff(guest), to = Math.max(0, Math.min(100, from + j.tier.gain));
+    const unlocked = guest.events.filter(e => from < e.at && to >= e.at).map(e => e.title);
+    state.affinity[guest.id] = to;
+    const k = state.day + ':' + guest.id; state.gifts[k] = (state.gifts[k] || 0) + 1;
+    state.log.unshift({ day: state.day, npc: guest.name, name, final: j.final, gain: to - from });
+    state.log = state.log.slice(0, 30);
+    lastResult = { ...j, name, npc: guest, from, to, gain: to - from, unlocked };
+    save(); renderAll();
+  }
+
+  function renderAll(){ renderGuests(); renderStation(); renderPreview(); renderServe(); renderFeedback(); renderLog(); document.body.classList.toggle('pm', $('pm').checked); }
+
+  $('serve').onclick = serve;
+  $('clear').onclick = () => { sel = {}; lastResult = null; renderAll(); };
+  $('next').onclick = () => { state.day++; lastResult = null; save(); renderAll(); };
+  $('reset').onclick = () => { if (confirm('確定重置所有好感與天數？')) { state = fresh(); lastResult = null; save(); renderAll(); } };
+  $('pm').onchange = renderAll;
+  renderAll();
+})();
+</script>
+</body>
+</html>

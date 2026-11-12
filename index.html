@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>終末酒吧</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <section class="scene" id="title"></section>
+  <section class="scene" id="bar"></section>
+  <section class="scene" id="mix"></section>
+
+  <div id="hud">
+    <span class="night" id="nightLbl"></span>
+    <span class="sp"></span>
+    <label class="chk"><input type="checkbox" id="plan"> 企劃模式</label>
+    <button class="btn" id="endNight">打烊 ▶</button>
+    <button class="btn" id="hudReset">重置存檔</button>
+  </div>
+
+  <div id="dlg"></div>
+  <div id="result"></div>
+  <div id="card"></div>
+  <div id="toast"></div>
+  <div id="fade"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="story.js"></script>
+<script src="engine.js"></script>
+<script src="art.js"></script>
+<script src="barscene.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
