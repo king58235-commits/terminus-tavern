@@ -170,11 +170,13 @@ const BarScene = (function () {
     g.fillStyle = 'rgba(0,0,0,.38)'; g.fillRect(x - 5, y - 1, 10, 2); g.fillRect(x - 3, y + 1, 6, 1);
     const im = p.id && sheetFor(p.id);
     if (im) {
-      const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : fr, row = dir === 1 ? 0 : 1;
+      // 站立待機只用固定的第 0 格（兩格輪播會因姿勢差異而抖動），改用很輕微的平滑呼吸浮動
+      const col = sit ? (p.drink ? 7 : 6) : walk ? 2 + wf : 0, row = dir === 1 ? 0 : 1;
+      const breathe = (!sit && !walk) ? Math.sin(t / 700 + (p.phase || 0)) * 0.25 : 0;
       // sprite sheet 每格 = 圖寬/8 x 圖高/2（建議 192x240，高解析）；整格對應到 32x40 個場景像素，腳底基準線在格內 95%
       const fw = im.width / 8, fh = im.height / 2;
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      g.drawImage(im, col * fw, row * fh, fw, fh, x - SW / 2, y - 38, SW, SH);
+      g.drawImage(im, col * fw, row * fh, fw, fh, x - SW / 2, y - 38 + breathe, SW, SH);
       g.imageSmoothingEnabled = false; return;
     }
     let by = y; if (sit) by = y - 1;

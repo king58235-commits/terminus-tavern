@@ -40,7 +40,9 @@ for ri, row in enumerate(cells):
     bottoms = sorted(c[3] for c in row); base_src = bottoms[len(bottoms) // 2]
     for ci, (x0, y0, x1, y1) in enumerate(row):
         sub = mask[y0:y1, x0:x1]
-        ys, xs = np.nonzero(sub); cx = xs.mean() + x0               # 質心 x
+        ys, xs = np.nonzero(sub)
+        low = ys > ys.min() + (ys.max() - ys.min()) * 0.65            # 只看下半身（腳、凳子），避免手臂/披風晃動造成偏移
+        cx = xs[low].mean() + x0                                      # 以腳部重心對齊 x
         pad = 4
         box = (x0 - pad, y0 - pad, x1 + pad, y1 + pad)
         rgb = a[box[1]:box[3], box[0]:box[2]].copy()
