@@ -36,7 +36,7 @@
 
   // ---------- 通用 ----------
   const fade = $('#fade');
-  async function xfade(fn) { fade.classList.add('on'); await sleep(450); await fn(); fade.classList.remove('on'); await sleep(450); }
+  async function xfade(fn) { Sound.whoosh(); fade.classList.add('on'); await sleep(450); await fn(); fade.classList.remove('on'); await sleep(450); }
   function showScene(id) {
     scene = id;
     document.querySelectorAll('.scene').forEach(s => s.classList.toggle('active', s.id === id));
@@ -47,6 +47,7 @@
   let toastT;
   function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => (el.style.display = 'none'), 1800); }
   async function card(title, sub, mid) {
+    Sound.bell();
     const c = $('#card'); c.innerHTML = `<h2>${title}</h2><p>${sub || ''}</p>`;
     c.classList.add('show'); await sleep(30); c.classList.add('in'); await sleep(650);
     if (mid) await mid(); await sleep(1100);
@@ -68,13 +69,13 @@
       if (L && R) { L.classList.toggle('dim', w === 'me'); R.classList.toggle('dim', w === 'npc'); }
       let i = 0, typing = true; const txt = line.t;
       const finish = () => { clearInterval(timer); typing = false; textEl.textContent = txt; arrow.style.opacity = 1; };
-      const timer = setInterval(() => { i++; textEl.textContent = txt.slice(0, i); if (i >= txt.length) finish(); }, 26);
-      const adv = () => { if (typing) { finish(); return; } curAdvance = null; dlg.onclick = null; res(); };
+      const timer = setInterval(() => { i++; textEl.textContent = txt.slice(0, i); if (w !== 'sys' && i % 3 === 0) Sound.blip(w); if (i >= txt.length) finish(); }, 26);
+      const adv = () => { if (typing) { finish(); return; } Sound.next(); curAdvance = null; dlg.onclick = null; res(); };
       curAdvance = adv; dlg.onclick = adv;
     });
   }
   async function playDlg(lines, ctx) {
-    ctx = ctx || {}; skipAll = false; const n = ctx.npc;
+    ctx = ctx || {}; skipAll = false; const n = ctx.npc; Sound.duck(true);
     dlg.className = 'show ' + (ctx.mode || '');
     const figs = ctx.noFigs ? '' : (n
       ? `<div class="dfig left" id="dfL">${Art.fig(n.look, { id: n.id })}</div><div class="dfig right" id="dfR">${Art.keeper()}</div>`
@@ -86,7 +87,7 @@
     }
     skip.onclick = e => { e.stopPropagation(); skipAll = true; if (curAdvance) { curAdvance(); if (curAdvance) curAdvance(); } };
     if (ctx.title) {
-      dlg.classList.add('titling');                       // 標題出現時先藏起立繪，避免蓋住標題文字
+      dlg.classList.add('titling'); Sound.gong();          // 標題出現時先藏起立繪，避免蓋住標題文字
       box.style.visibility = 'hidden'; skip.style.visibility = 'hidden';
       const t = $('.dtitle', dlg); t.innerHTML = `<small>${ctx.sub || ''}</small><h2>${ctx.title}</h2>`;
       await sleep(150); t.classList.add('on'); await sleep(1800); t.classList.remove('on'); await sleep(500);
@@ -94,7 +95,7 @@
       dlg.classList.remove('titling');
     }
     for (const line of lines) { if (skipAll) break; await speak(line, n); }
-    dlg.className = ''; dlg.innerHTML = ''; curAdvance = null;
+    dlg.className = ''; dlg.innerHTML = ''; curAdvance = null; Sound.duck(false);
   }
   async function playEvent(n, ev) {
     const idx = THRESH.indexOf(ev.at) + 1;
@@ -123,6 +124,7 @@
         <div class="door l" id="dL"></div><div class="door r" id="dR"></div></div></div>
         <button class="rstbtn" id="rst">重置存檔</button>`;
     }
+    const ta = document.createElement('button'); ta.className = 'btn audio-btn title-audio'; ta.title = '聲音'; t.appendChild(ta); Sound.bindButton(ta);
     $('#startBtn').onclick = startGame;
     $('#rst').onclick = resetAll;
   }
@@ -130,10 +132,11 @@
 
   async function startGame() {
     const t = $('#title'); $('#startBtn').disabled = true;
+    Sound.unlock(); Sound.bgmStart(); Sound.doorOpen();
     t.classList.add('opening'); await sleep(1250);
     t.classList.add('enter'); await sleep(950);
     fade.classList.add('on'); await sleep(450);
-    buildBar(); showScene('bar'); fade.classList.remove('on'); await sleep(800);
+    buildBar(); showScene('bar'); fade.classList.remove('on'); Sound.footsteps(3); Sound.ambient(true); await sleep(800);
     // 開場：酒館插畫背景 + 老闆立繪
     if (!st.seenIntro) { await playDlg(S.intro, { mode: 'dark', title: '序章', sub: S.title }); st.seenIntro = true; save(); }
   }
@@ -152,7 +155,7 @@
   }
 
   async function openGuest(n) {
-    if (busy) return; busy = true;
+    if (busy) return; busy = true; Sound.knock();
     try {
       const pend = pending(n);
       if (!pend.length && giftsLeft(n) <= 0) { toast(`${n.name} 今晚已經喝夠了。`); return; }
@@ -213,7 +216,7 @@
         `<div class="chip ${(sel[s.id] || '') === i.id ? 'on' : ''}" data-s="${s.id}" data-i="${i.id}">${i.emoji} ${i.name}</div>`).join('');
       return `<div class="slot"><div class="lb"><b>${s.name}</b>${s.required ? '（必選）' : ''}</div><div class="chips">${chips}</div></div>`;
     }).join('');
-    $('#pick').querySelectorAll('.chip').forEach(c => c.onclick = () => { if (busy) return; sel[c.dataset.s] = c.dataset.i || null; renderPick(); renderPrev(); });
+    $('#pick').querySelectorAll('.chip').forEach(c => c.onclick = () => { if (busy) return; Sound.select(); sel[c.dataset.s] = c.dataset.i || null; renderPick(); renderPrev(); });
   }
 
   function renderPrev() {
@@ -234,6 +237,7 @@
     if (busy || !sel.base || giftsLeft(mixNpc) <= 0) return; busy = true;
     const n = mixNpc;
     try {
+      $('#prev').classList.add('shaking'); await Sound.mixSequence(); $('#prev').classList.remove('shaking');   // 搖酒、倒酒、冰塊、碰杯、推杯（約 2.7 秒）
       const j = E.judge(sel, n, st.day), name = E.cocktailName(sel, j.f, j.q.recipe);
       const from = aff(n), to = clamp(from + j.tier.gain, 0, 100);
       st.affinity[n.id] = to; const k = st.day + ':' + n.id; st.gifts[k] = (st.gifts[k] || 0) + 1;
@@ -263,13 +267,16 @@
         <div class="rgain ${gain < 0 ? 'neg' : 'pos'}">好感 ${gain >= 0 ? '+' : ''}${gain}　（${r.from} → ${r.to}）</div>
         ${r.pend ? `<div class="rnew">🎉 解鎖了 ${r.pend} 段新事件！</div>` : ''}
         <div class="rbtns">${r.pend ? '<button class="btn primary" data-c="event">查看事件</button><button class="btn" data-c="later">稍後</button>' : '<button class="btn primary" data-c="later">繼續</button>'}</div></div>`;
-      el.classList.add('show');
+      el.classList.add('show'); Sound.result(t.stars, gain); if (r.pend) setTimeout(() => Sound.unlockFx(), 900);
       el.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { el.classList.remove('show'); res(b.dataset.c); });
     });
   }
 
   // ---------- HUD ----------
   $('#plan').onchange = e => { planner = e.target.checked; if (scene === 'mix') { renderInfo(); renderPrev(); } };
+  Sound.bindButton($('#audioBtn'));
+  document.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.classList.contains('audio-btn') && b.id !== 'startBtn' && !b.classList.contains('dskip')) Sound.click(); }, true);
+  document.addEventListener('pointerdown', () => Sound.unlock(), { once: true });
   $('#endNight').onclick = endNight;
   $('#hudReset').onclick = resetAll;
 

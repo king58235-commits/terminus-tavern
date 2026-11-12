@@ -280,3 +280,15 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 .dtitle h2{text-shadow:0 0 22px #e8b45c,0 2px 10px #000}
 #dlg.titling .dfig{opacity:0}
 .dfig{transition:opacity .7s,filter .25s}
+
+/* ===== 聲音控制 ===== */
+.audio-btn{padding:4px 10px;font-size:18px;line-height:1}
+.title-audio{position:absolute;right:16px;top:14px;z-index:6}
+#audioPanel{position:absolute;width:210px;z-index:95;display:none;background:rgba(14,10,20,.96);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 6px 24px #000a}
+#audioPanel.on{display:block}
+#audioPanel h4{font-size:14px;color:var(--gold);letter-spacing:.2em;margin-bottom:8px}
+#audioPanel label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;margin:7px 0;color:var(--ink)}
+#audioPanel input[type=range]{width:120px;accent-color:#e8b45c}
+#audioPanel label.chk{justify-content:flex-start;color:var(--mute)}
+#prev.shaking{animation:shk .11s infinite}
+@keyframes shk{0%,100%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-1px)}}
