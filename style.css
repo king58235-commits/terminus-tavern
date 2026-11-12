@@ -254,7 +254,7 @@ label.chk{font-size:14px;color:var(--mute);display:flex;align-items:center;gap:6
 .dfig:has(.figimg){transform:none !important}
 .dfig.left:has(.figimg){left:110px;bottom:-250px}
 .dfig.right:has(.figimg){left:800px;bottom:-250px}
-.dfig.center:has(.figimg){left:480px;bottom:-250px}
+.dfig.center:has(.figimg){left:505px;bottom:-250px}
 .dfig .figimg{height:900px}
 .dfig.dim .figimg{filter:brightness(.5)}
 /* 調酒模式：半身立繪；下緣在吧台檯面遠端邊緣（背景圖約 68% 高度）直接被遮住，看起來坐在吧台後面 */

@@ -44,6 +44,7 @@ const STORY = {
       barrels: { src: 'props/barrels.png', w: 26, ax: 0.5, ay: 0.90 },
       pillar:  { src: 'props/pillar.png',  w: 15, ax: 0.5, ay: 0.95 },
       stool:   { src: 'props/stool.png',   w: 12, ax: 0.5, ay: 0.95 },
+      sidetable: { src: 'props/sidetable.png', w: 24, ax: 0.5, ay: 0.92 },
       plant:   { src: 'props/plant.png',   w: 18, ax: 0.5, ay: 0.96 },
       counter: { src: 'props/counter.png', w: 80, cx: 0.1, cy: 4.7, shear: 0.165 },
     },
@@ -266,7 +267,7 @@ GAME_DATA.npcs.forEach(n => Object.assign(n, STORY.npcs[n.id]));
 
 // 素材版本號：換圖後請把這個字串改掉（例如改成日期），瀏覽器就會重新下載，不會用到舊快取。
 // （用程式載入的圖片，Ctrl+F5 不一定會重新抓，所以所有素材路徑都自動加上 ?v=版本）
-STORY.version = '20251113h';
+STORY.version = '20251113i';
 (function bust(o) {
   for (const k in o) {
     if (typeof o[k] === 'string') o[k] += '?v=' + STORY.version;

@@ -261,7 +261,7 @@ const BarScene = (function () {
     const blocked = Array.from({ length: GY }, () => Array(GX).fill(false));
     const block = (x, y) => { if (x >= 0 && x < GX && y >= 0 && y < GY) blocked[y][x] = true; };
     for (let gx = 5; gx <= 8; gx++) block(gx, 1);
-    block(0, 1); block(0, 2); block(0, 3);
+    block(0, 1); block(0, 2); block(0, 3); block(0, 4);
     block(4, 1); block(1, 7);
     tables.forEach(t => block(t.gx, t.gy));
 
@@ -300,6 +300,9 @@ const BarScene = (function () {
         box(g, p[0] + .2, p[1] + .2, .6, .6, 42, { top: '#8b91a0', l: '#6a7080', r: '#4c515e', hi: '#a3a9b8' }); box(g, p[0] + .05, p[1] + .05, .9, .9, 5, { top: '#232630', l: '#171a22', r: '#101218', hi: '#3a3f4c' }, 38); box(g, p[0] + .05, p[1] + .05, .9, .9, 3, { top: '#4a4f5c', l: '#3a3f4c', r: '#2a2e38' });
       });
     });
+    // 側桌（堆書加提燈）：只在有貼圖時才出現
+    add(5.4, g => { const p = iso(0.9, 4.0); drawProp(g, 'sidetable', p.x, p.y); });
+    { const p = iso(0.9, 4.0); lights.push({ x: p.x + 6, y: p.y - 17, r: 22 }); }
     // 植栽
     add(0.65 + 5.2, g => {
       const p = iso(0.65, 5.1);

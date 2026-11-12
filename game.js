@@ -134,7 +134,8 @@
     t.classList.add('enter'); await sleep(950);
     fade.classList.add('on'); await sleep(450);
     buildBar(); showScene('bar'); fade.classList.remove('on'); await sleep(800);
-    if (!st.seenIntro) { await playDlg(S.intro, { mode: 'dim', noFigs: true }); st.seenIntro = true; save(); }
+    // 開場：酒館插畫背景 + 老闆立繪
+    if (!st.seenIntro) { await playDlg(S.intro, { mode: 'dark', title: '序章', sub: S.title }); st.seenIntro = true; save(); }
   }
 
   // ---------- 酒吧場景 ----------
