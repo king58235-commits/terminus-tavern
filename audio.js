@@ -1,6 +1,6 @@
 /* ============================================================
    終末酒吧 — 音訊：BGM（mp3）＋全部用 WebAudio 合成的音效
-   - 音效不依賴任何外部檔案（水聲、冰塊、搖酒杯、杯子碰撞、門聲、提示音……都是程式合成）
+   - 音效不依賴任何外部檔案（點擊、對話打字、門聲、結算和弦、鐘聲……都是程式合成）
    - BGM 路徑在 story.js 的 STORY.audio.bgm
    - 音量與靜音存在 localStorage（km_audio_v2），HUD／入口頁右上角的喇叭按鈕可調整
    ============================================================ */
@@ -66,7 +66,6 @@ const Sound = (function () {
       },
       doorOpen(t) { S.creak(t, 0.9); S.thump(t + 0.9, 110); for (let i = 0; i < 3; i++) noise(t + 0.95 + i * 0.09, 0.07, { f: 1200 + i * 200, Q: 2, vol: 0.1 }); return 1.4; },
       footsteps(t, n) { n = n || 4; for (let i = 0; i < n; i++) { tone(t + i * 0.3, 85 + rnd(-8, 8), 0.12, { slide: 55, vol: 0.12 }); noise(t + i * 0.3, 0.05, { type: 'lowpass', f: 500, vol: 0.05 }); } return n * 0.3; },
-      clink(t, v) { v = v || 1; tone(t, 2637, 0.55, { vol: 0.12 * v, wet: 0.3 }); tone(t, 3951, 0.35, { vol: 0.07 * v }); tone(t, 5300, 0.18, { vol: 0.03 * v }); noise(t, 0.015, { type: 'highpass', f: 5000, vol: 0.05 * v }); return 0.6; },
       result(t, stars, gain) {
         if (gain < 0) { tone(t, 190, 0.6, { type: 'triangle', slide: 70, vol: 0.2 }); noise(t, 0.3, { type: 'lowpass', f: 300, vol: 0.1 }); return 0.7; }
         const notes = [[523], [523, 659], [523, 659, 784], [523, 659, 784, 1047], [523, 659, 784, 1047, 1319]][Math.min(4, Math.max(0, stars))];
@@ -77,13 +76,12 @@ const Sound = (function () {
       sparkle(t) { for (let i = 0; i < 9; i++) tone(t + i * 0.06, rnd(2200, 5200), 0.5, { vol: 0.04, wet: 0.6 }); return 0.9; },
       unlock(t) { [784, 988, 1175, 1568].forEach((f, i) => tone(t + i * 0.1, f, 0.8, { vol: 0.09, wet: 0.6 })); S.sparkle(t + 0.3); return 1.2; },
       bell(t, n) { n = n || 3; for (let k = 0; k < n; k++) [1, 2.76, 5.4, 8.9].forEach((m, i) => tone(t + k * 0.95, 392 * m, 2.8, { vol: 0.1 / (i + 1), wet: 0.5 })); return n * 0.95 + 2.8; },
-      murmurClink(t, k) { S.clink(t, 0.25 * (k == null ? 1 : k)); return 0.6; },
     };
     return S;
   }
 
   // ---------- 即時播放 ----------
-  let ctx = null, master = null, synth = null, ambNode = null, ambTimer = null;
+  let ctx = null, master = null, synth = null, ambNode = null;
   function ensure() {
     if (!ctx) {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
@@ -111,7 +109,7 @@ const Sound = (function () {
   }
   document.addEventListener('visibilitychange', () => { if (!bgm || !bgmWanted) return; if (document.hidden) bgm.pause(); else { const p = bgm.play(); if (p && p.catch) p.catch(() => {}); } });
 
-  // ---------- 環境音（酒館低語＋偶爾的杯子聲） ----------
+  // ---------- 環境音（酒館低語；只有低頻噪音，不再有定時冒出的聲音） ----------
   // 環境音走 master（會被 SFX_MAKEUP 放大），所以基準要很小；amb 滑桿 30% = 基準 0.009，可調到 0
   const ambLevel = () => 0.03 * st.amb;
   function buildAmbient(c, dest, level) {
@@ -123,10 +121,9 @@ const Sound = (function () {
   }
   let ambG = null, ambLg = null;
   function ambient(on) {
-    if (!on) { if (ambNode) { try { ambNode.stop(); } catch (e) {} ambNode = null; ambG = null; } clearInterval(ambTimer); ambTimer = null; return; }
+    if (!on) { if (ambNode) { try { ambNode.stop(); } catch (e) {} ambNode = null; ambG = null; } return; }
     if (ambNode || st.muted || !ensure()) return;
     const r = buildAmbient(ctx, master, ambLevel()); ambNode = r.s; ambG = r.g; ambLg = r.lg;
-    ambTimer = setInterval(() => { if (!st.muted && st.amb > 0 && Math.random() < 0.6) play('murmurClink', st.amb / 0.3); }, 7000);
   }
   function applyAmb() { if (ambG) { ambG.gain.value = ambLevel(); ambLg.gain.value = ambLevel() * 0.4; } }
 
@@ -177,7 +174,7 @@ const Sound = (function () {
   }
 
   return {
-    names: ['click', 'select', 'blip', 'next', 'whoosh', 'thump', 'creak', 'doorOpen', 'footsteps', 'clink', 'result', 'sparkle', 'unlock', 'bell'],
+    names: ['click', 'select', 'blip', 'next', 'whoosh', 'thump', 'creak', 'doorOpen', 'footsteps', 'result', 'sparkle', 'unlock', 'bell'],
     measure, measureAmbient, bindButton,
     unlock() { ensure(); if (!bgm) bgmStart(); },
     bgmStart, duck, ambient,
